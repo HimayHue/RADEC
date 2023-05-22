@@ -9,11 +9,9 @@ const TotalMessages = require('../../models/TotalMessages');
 
 module.exports = async (client, message) => {
   if (message.author.bot) {
-    console.log("bot sent message");
     return;
   };
 
-  console.log("exectued count messages");
   const query = {
     userId: message.author.id,
   };

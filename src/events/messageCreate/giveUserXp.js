@@ -24,7 +24,6 @@ module.exports = async (client, message) => {
   // Check if the message was sent in a guild, not by a bot, and the author is not in cooldown.
   if (!message.inGuild() || message.author.bot || cooldowns.has(message.author.id)) return;
 
-  console.log("ran give user exp");
   // Calculate a random XP to give to the user.
   const xpToGive = getRandomXp(45, 60 );
 

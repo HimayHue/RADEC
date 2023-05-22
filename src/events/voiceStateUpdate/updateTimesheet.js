@@ -19,15 +19,15 @@ module.exports = async (client, oldState, newState) => {
   const usernameId = newState.member.user.id;
 
   if (newState.member.roles.cache.has(roleRequiredId)) {
-    if (!oldState.channelId && newState.channelId == voiceChannelId) {
+    if (newState.channelId == voiceChannelId) {
       // User joined the channel, save the current time
       userJoinTimes[username] = Date.now();
-      client.channels.cache.get(timesheetChannelId).send(`User <@${usernameId}> has joined ${newState.channel.name} at ${new Date(userJoinTimes[username]).toLocaleString()}`);
+      client.channels.cache.get(timesheetChannelId).send(`[Join] <@${usernameId}> has joined ${newState.channel.name} - ${new Date(userJoinTimes[username]).toLocaleString()}`);
     } 
-    else if (oldState.channelId == voiceChannelId && !newState.channelId) {
+    else if (oldState.channelId == voiceChannelId) {
       // User left the channel, calculate the time difference
       const elapsedTime = Date.now() - userJoinTimes[username];
-      client.channels.cache.get(timesheetChannelId).send(`User <@${usernameId}> has left ${oldState.channel.name} at ${new Date().toLocaleString()}. They stayed for ${elapsedTime / 1000} seconds.`);
+      client.channels.cache.get(timesheetChannelId).send(`[Left] <@${usernameId}> has left ${oldState.channel.name} - ${new Date().toLocaleString()}. Duration: ${elapsedTime / 1000} seconds.`);
       delete userJoinTimes[username];
     }
   }
