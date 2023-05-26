@@ -53,6 +53,14 @@ function clockOut(usernameId, timeOut, addHoursToCorrectDates /** @type {boolean
           (activeSessions[usernameId].timeOut - activeSessions[usernameId].timeIn) / (1000 * 60 * 60)
         )
         .toFixed(3);
+    console.log(`\nUser is clocking out`)
+    console.log(`ACTIVE SESSIONS: ${JSON.stringify(activeSessions)}`)
+    // TODO update timesheet
+
+    delete activeSessions[usernameId];
+    console.log(`\nUser clocked out and session deleted`)
+    console.log(`ACTIVE SESSIONS: ${JSON.stringify(activeSessions)} \n`)
+
   }
 }
 
@@ -76,17 +84,14 @@ module.exports = async (client, oldState, newState) => {
   let timesheetChannelId = process.env.TIMESHEET_TEXT_CHANNEL_ID;
 
   
-  const arizonDate = moment();
-  const testDate = new Date(2023, 4, 26, 1, 33, 30);
+  const arizonaDate = new Date();
   
-  const currentArizonaYear = arizonDate.getFullYear();
-  const currentArizonaMonth = arizonDate.getMonth() + 1; // [1-12] isntead of [0-11]
-  const currentArizonaDay = arizonDate.getDate();
-  const currentWeekday = arizonDate.getDay();
+  const currentArizonaYear = arizonaDate.getFullYear();
+  const currentArizonaMonth = arizonaDate.getMonth() + 1; // [1-12] isntead of [0-11]
+  const currentArizonaDay = arizonaDate.getDate();
+  const currentWeekday = arizonaDate.getDay();
   
-  console.log(`AZ Time: ${arizonDate}`);
-  console.log(`Test Time: ${testDate} `);
-  console.log(`Time elapsed: ${testDate - arizonDate} \n`);
+  console.log(`AZ Time: ${arizonaDate}`);
 
   const query = {
     employeeID: usernameId,
@@ -98,7 +103,7 @@ module.exports = async (client, oldState, newState) => {
     if (newState.channelId == voiceChannelId) {
       // User joins channel check if a timesheet exists
 
-      clockIn(true, usernameId, username, arizonDate);
+      clockIn(true, usernameId, username, arizonaDate);
 
       /*
       try {
@@ -213,13 +218,17 @@ module.exports = async (client, oldState, newState) => {
       */
 
       client.channels.cache.get(timesheetChannelId).send(
-          `[Join] <@${usernameId}> has joined ${newState.channel.name} - ${arizonDate.toLocaleString()}`
+          `[Join] <@${usernameId}> has joined ${newState.channel.name} - ${arizonaDate.toLocaleString()}`
         );
     } 
 
     // USER LEAVES VOICE CHAT
     else if (oldState.channelId == voiceChannelId) {
-      activeSessions[usernameId].timeOut = arizonDate;
+
+      clockOut(usernameId, arizonaDate, false);
+
+      /*
+      activeSessions[usernameId].timeOut = arizonaDate;
       activeSessions[usernameId].totalHours =
         ((activeSessions[usernameId].timeOut -
           activeSessions[usernameId].timeIn) /
@@ -227,7 +236,7 @@ module.exports = async (client, oldState, newState) => {
 
       client.channels.cache
         .get(timesheetChannelId).send(
-          `[Left] <@${usernameId}> has left ${oldState.channel.name} - ${arizonDate.toLocaleString()}. 
+          `[Left] <@${usernameId}> has left ${oldState.channel.name} - ${arizonaDate.toLocaleString()}. 
           Duration: ${activeSessions[usernameId].totalHours} Hours.`
         );
 
@@ -236,15 +245,8 @@ module.exports = async (client, oldState, newState) => {
         dayTimesheets[usernameId].totalHours += activeSessions[usernameId].totalHours;
         console.log(`Successfully added session to current day ${JSON.stringify(dayTimesheets[usernameId])}`);
         // push the updated dayTimesheet to the database
+        */
 
-
-      console.log(
-        `ACTIVE SESSIONS BEFORE DELETION: ${JSON.stringify(activeSessions)}`
-      );
-
-      delete activeSessions[usernameId];
-      console.log(`Session Deleted`);
-      console.log(`ACTIVE SESSIONS: ${JSON.stringify(activeSessions)}`);
     }
   }
 };
