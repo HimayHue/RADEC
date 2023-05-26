@@ -16,7 +16,7 @@ module.exports = (client) => {
 
     // Registering an event listener with the client for the current event name
     client.on(eventName, async (...args) => {  // capture all arguments
-      console.log(`Received ${args.length} arguments for event ${eventName}`);
+      //console.log(`Received ${args.length} arguments for event ${eventName}`);
       for (const eventFile of eventFiles) {
         try {
           // Importing the event function from the event file

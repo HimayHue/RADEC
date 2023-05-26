@@ -1,14 +1,12 @@
 const { Schema, model } = require("mongoose");
 
 const timesheetSchema = new Schema({
-  userId: {
-    type: String,
-    required: true,
-  },
-  timeMessageSent: {
-    type: Date,
-    required: true,
-  },
+  employeeID: String,     // Unique identifier for the person
+  name: String,
+  year: Number,
+  totalHours: Number,
+  months: [Object],
+  projects: [Object],
 });
 
 module.exports = model("Timesheet", timesheetSchema);
