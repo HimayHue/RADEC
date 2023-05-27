@@ -12,7 +12,6 @@ const { Client, VoiceState } = require("discord.js");
 const Timesheet = require("../../models/Timesheet");
 require("dotenv").config();
 
-// Clock In
 
 // TODO REMOVE `USERNAME`
 function createNewSession(debugMode, username, timeIn, timeOut = null) {
@@ -37,8 +36,7 @@ function clockIn(debugMode, usernameId, username, timeIn) {
   }
 }
 
-
-function clockOut(usernameId, timeOut, addHoursToCorrectDates /** @type {boolean} */) {
+async function clockOut(usernameId, timeOut, query, username, addHoursToCorrectDates /** @type {boolean} */) {
 
   if (addHoursToCorrectDates && (activeSessions[usernameId].timeIn.getDate() != timeOut.getDate())) {
     // CASE: users works into a new month
@@ -48,14 +46,20 @@ function clockOut(usernameId, timeOut, addHoursToCorrectDates /** @type {boolean
   // adds the total hours worked to the date of timeIn
   else { 
     activeSessions[usernameId].timeOut = timeOut;
-    activeSessions[usernameId].totalHours =
-        (
-          (activeSessions[usernameId].timeOut - activeSessions[usernameId].timeIn) / (1000 * 60 * 60)
-        )
-        .toFixed(3);
+    activeSessions[usernameId].totalHours =parseFloat(
+      (
+        (activeSessions[usernameId].timeOut - activeSessions[usernameId].timeIn) /
+        (1000 * 60 * 60)
+      ).toFixed(3)
+    );
+    activeSessions[usernameId].timeIn.toLocaleString()
+    activeSessions[usernameId].timeOut.toLocaleString()
+
     console.log(`\nUser is clocking out`)
     console.log(`ACTIVE SESSIONS: ${JSON.stringify(activeSessions)}`)
-    // TODO update timesheet
+
+    
+    await updateTimesheet(activeSessions[usernameId], query, username);
 
     delete activeSessions[usernameId];
     console.log(`\nUser clocked out and session deleted`)
@@ -64,9 +68,146 @@ function clockOut(usernameId, timeOut, addHoursToCorrectDates /** @type {boolean
   }
 }
 
-// Store user join times
+async function updateTimesheet(session, query, username){
+  try {
+    const yearTimesheet = await Timesheet.findOne(query);
+    console.log(`\nTimesheet for ${username} was ${yearTimesheet ? '' : 'NOT '}found`);
+
+
+    if (yearTimesheet) {
+      yearTimesheet.lastOnline = session.timeOut.toLocaleString();
+
+      console.log(`Months Array: ${JSON.stringify(yearTimesheet.months)}`);
+
+      console.log(`Searching for Month ${session.timeIn.getMonth()}`);
+      const monthIndex = yearTimesheet.months.findIndex((month) => month.month === (session.timeIn.getMonth()));
+      console.log(`Month Timesheet for ${username} was ${monthIndex ? '' : 'NOT '}found`);
+
+      if (monthIndex) {
+        console.log(`Days Array: ${JSON.stringify(monthTimesheet.days)}`);
+
+        const dayIndex = yearTimesheet.months[monthIndex].days.find((day) => day.day === session.timeIn.getDate());
+        console.log(`\nDay Timesheet for ${username} was ${dayIndex ? '' : 'NOT '}found`);
+
+        if (dayIndex != -1) {
+          //console.log(`Sessions Array: ${JSON.stringify(dayTimesheet.ses)}`);
+
+          // ***** updateTimesheetHours ***** 
+          yearTimesheet.months[monthIndex].days[dayIndex].totalHours += session.totalHours;
+          yearTimesheet.months[monthIndex].totalHours += session.totalHours;
+          yearTimesheet.totalHours += session.totalHours;
+          console.log(`Updated Hours. \nday: ${dayTimesheet.totalHours} \nmonth ${monthTimesheet.totalHours} \nyear${yearTimesheet.totalHours} `)
+          // ***** updateTimesheetHours ***** 
+          dayTimesheet.sessions.push(session);
+
+          await yearTimesheet.save();
+
+          // TODO: Save to database
+
+
+        }
+        else {
+          // ***** addNewDay ***** 
+          const newDayTimesheet = new DayTimesheet(session.timeIn.getDate())
+          console.log(`Created new Day Timesheet for ${username}: ${JSON.stringify(newDayTimesheet)}`);
+
+          // ***** updateTimesheetHours ***** 
+          newDayTimesheet.totalHours += session.totalHours;
+          monthTimesheet.totalHours += session.totalHours;
+          yearTimesheet.totalHours += session.totalHours;
+          // ***** updateTimesheetHours ***** 
+
+          newDayTimesheet.sessions.push(session);
+          console.log(`Updated Day Timesheet for ${username}: ${JSON.stringify(newDayTimesheet)}`);
+
+          monthTimesheet.days.push(newDayTimesheet);
+          // ***** addNewDay ***** 
+
+          // TODO: Save to database
+
+          console.log(`Updated Year Timesheet for ${username}: ${JSON.stringify(yearTimesheet)}`);
+          
+          await yearTimesheet.save().catch((e) => {
+            console.log(`Error updating yearTimesheet for ${username}: ${e}`);
+          });
+
+        }
+      }
+      else {
+        // ***** addNewDay ***** 
+        const newDayTimesheet = new DayTimesheet(session.timeIn.getDate())
+        console.log(`\nCreated new Day Timesheet for ${username}: ${JSON.stringify(newDayTimesheet)}`);
+      
+        newDayTimesheet.sessions.push(session);
+        console.log(`Updated Day Timesheet for ${username}: ${JSON.stringify(newDayTimesheet)}`);
+
+       // ***** addNewMonth ***** 
+
+        const newMonthTimesheet = new MonthTimesheet(session.timeIn.getMonth())
+        newMonthTimesheet.days.push(newDayTimesheet); 
+        console.log(`Created new Month Timesheet for ${username}: ${JSON.stringify(newMonthTimesheet)}`);
+
+      }
+    }
+    else {
+
+      // ***** addNewDay ***** 
+      const newDayTimesheet = new DayTimesheet(session.timeIn.getDate())
+      console.log(`Created new Day Timesheet for ${username}: ${JSON.stringify(newDayTimesheet)}`);
+      
+      newDayTimesheet.sessions.push(session);
+      console.log(`Updated Day Timesheet for ${username}: ${JSON.stringify(newDayTimesheet)}`);
+
+      // ***** addNewMonth ***** 
+      const newMonthTimesheet = new MonthTimesheet(session.timeIn.getMonth())
+      newMonthTimesheet.days.push(newDayTimesheet);
+
+      // ***** addNewYear *****
+      const newYearTimesheet = new Timesheet({
+            employeeID: query.employeeID,
+            name: username,
+            year: query.year,
+            totalHours: 0,
+            lastOnline: session.timeOut.toLocaleString(),
+            months: [newMonthTimesheet], // Assign the array with newMonth to months property
+            projects: [],
+      });
+
+      // ***** updateTimesheetHours ***** 
+      newDayTimesheet.totalHours += session.totalHours;
+      newMonthTimesheet.totalHours += session.totalHours;
+      newYearTimesheet.totalHours += session.totalHours;
+      // ***** updateTimesheetHours ***** 
+
+      await newYearTimesheet.save().catch((e) => {
+        console.log(`Error creating new timesheet for ${username}: ${e}`);
+      });
+      console.log(`New timesheet successfully created for ${username}: ${newYearTimesheet}`);
+      // ***** Create newYearTimesheet ******
+
+    }
+  }
+  // If the try statement fails print out the error
+  catch (error) {
+    console.log(`Error updating timesheet: ${error} for ${username}`);
+  }
+}
+
+class DayTimesheet {
+  constructor(day) {
+    this.day = day;
+    this.totalHours = 0;
+    this.sessions = [];
+  }
+}
+class MonthTimesheet {
+  constructor(month) {
+    this.month = month;
+    this.totalHours = 0;
+    this.days = [];
+  }
+}
 const activeSessions = {};
-const dayTimesheets = {};
 
 /**
  * A function that handles the update of a user's timesheet based on changes in their voice state.
@@ -85,11 +226,7 @@ module.exports = async (client, oldState, newState) => {
 
   
   const arizonaDate = new Date();
-  
   const currentArizonaYear = arizonaDate.getFullYear();
-  const currentArizonaMonth = arizonaDate.getMonth() + 1; // [1-12] isntead of [0-11]
-  const currentArizonaDay = arizonaDate.getDate();
-  const currentWeekday = arizonaDate.getDay();
   
   console.log(`AZ Time: ${arizonaDate}`);
 
@@ -105,118 +242,6 @@ module.exports = async (client, oldState, newState) => {
 
       clockIn(true, usernameId, username, arizonaDate);
 
-      /*
-      try {
-        // pull the players Timesheet from database
-        const timesheet = await Timesheet.findOne(query);
-
-        // objective of this if statement is to pull the current dayTimesheet or create one if needed
-        if (timesheet) {
-          console.log(`\n Timesheet for ${username} found \n`);
-          // check if the months array has a month object of the current month
-          const monthTimesheet = timesheet.months.find((month) => month.month === currentArizonaMonth);
-          console.log(`Months Array: ${JSON.stringify(timesheet.months)}`);
-
-
-          
-          if (monthTimesheet) {
-            console.log(`Month Timesheet for month ${monthTimesheet.month} for ${username} found`)
-            const monthIndex = timesheet.months.findIndex((month) => month.month === currentArizonaMonth);
-            console.log(`Month array index: ${monthIndex} \n`);
-            
-            const dayTimesheet = monthTimesheet.days.find((day) => day.day === currentArizonaDay);
-
-            // if there a dayTimesheet
-            if (dayTimesheet) {
-              console.log(`Day Timesheet ${dayTimesheet.day} for ${username} found for ${currentArizonaMonth}-${currentArizonaDay} \n`)
-              timesheet[usernameId] = dayTimesheet;
-            } 
-            // if there is no dayTimesheet
-            else {
-              console.log(`Day Timesheet for ${username} for ${currentArizonaMonth}-${currentArizonaDay} not found`)
-              dayTimesheets[usernameId] = {
-                day: currentArizonaDay,
-                totalHours: 0,
-                sessions: [],
-              }
-              console.log(`Created new dayTimesheet for ${username} for ${currentArizonaMonth}-${currentArizonaDay}`)
-              try {
-                timesheet.months[monthIndex].days.push(dayTimesheets[usernameId]);
-                console.log(`${username}'s current month (${currentArizonaMonth}) Days[] Array: ${JSON.stringify(timesheet.months[monthIndex].days)}`);
-                await timesheet.save();
-                console.log(`Added day to timesheet successfully\n`);
-              } catch (e) {
-                console.log(`error pushing day to current month ${e}`);
-              }
-              
-            }
-
-          }
-          // if there isnt a timesheet for this month make one with current day
-          else {
-            console.log(`Month Timesheet for ${username} NOT found`)
-            // create timesheet for today
-            const newDayTimesheet = {
-              day: currentArizonaDay,
-              totalHours: 0,
-              sessions: [],
-            }
-
-            console.log(`New dayTimesheet created`);
-
-            dayTimesheets[usernameId] = newDayTimesheet;
-            
-            // create timesheet for the month
-            const newMonthTimesheet = {
-              month: currentArizonaMonth,
-              totalHours: 0,
-              days: [newDayTimesheet],
-            }
-
-            console.log(`New monthTimesheet created`);
-
-
-            // upload newMonth to the months array in the database
-            timesheet.months.push(newMonthTimesheet);
-            await timesheet.save();
-          }
-        } 
-        // if there isnt a timesheet for the user at all make one
-        else {
-          console.log(`No Timesheet for ${username} exists. Creating one...`)
-          const newDay = {
-            day: currentArizonaDay,
-            totalHours: 0,
-            sessions: [],
-          };
-    
-          const newMonth = {
-            month: currentArizonaMonth, // Example month value (1-12)
-            totalHours: 0,
-            days: [newDay],
-          };
-    
-          const newTimesheet = new Timesheet({
-            employeeID: query.employeeID,
-            name: username,
-            year: query.year,
-            totalHours: 0,
-            months: [newMonth], // Assign the array with newMonth to months property
-            projects: [],
-          });
-
-          await newTimesheet.save().catch((e) => {
-            console.log(`Error creating new timesheet for ${username}: ${e}`);
-          });
-          console.log(`New timesheet successfully created for ${username}: ${newTimesheet}`);
-
-        }
-      } catch (error) {
-        console.log(`Error updating timesheet: ${error} for ${username}`);
-      }
-
-      */
-
       client.channels.cache.get(timesheetChannelId).send(
           `[Join] <@${usernameId}> has joined ${newState.channel.name} - ${arizonaDate.toLocaleString()}`
         );
@@ -225,27 +250,7 @@ module.exports = async (client, oldState, newState) => {
     // USER LEAVES VOICE CHAT
     else if (oldState.channelId == voiceChannelId) {
 
-      clockOut(usernameId, arizonaDate, false);
-
-      /*
-      activeSessions[usernameId].timeOut = arizonaDate;
-      activeSessions[usernameId].totalHours =
-        ((activeSessions[usernameId].timeOut -
-          activeSessions[usernameId].timeIn) /
-        (1000 * 60 * 60)).toFixed(3);
-
-      client.channels.cache
-        .get(timesheetChannelId).send(
-          `[Left] <@${usernameId}> has left ${oldState.channel.name} - ${arizonaDate.toLocaleString()}. 
-          Duration: ${activeSessions[usernameId].totalHours} Hours.`
-        );
-
-        // add the session to the dayTimesheet 
-        dayTimesheets[usernameId].sessions.push(activeSessions[usernameId]);
-        dayTimesheets[usernameId].totalHours += activeSessions[usernameId].totalHours;
-        console.log(`Successfully added session to current day ${JSON.stringify(dayTimesheets[usernameId])}`);
-        // push the updated dayTimesheet to the database
-        */
+      clockOut(usernameId, arizonaDate, query, username, false);
 
     }
   }

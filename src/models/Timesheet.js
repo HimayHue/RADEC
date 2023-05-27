@@ -5,6 +5,7 @@ const timesheetSchema = new Schema({
   name: String,
   year: Number,
   totalHours: Number,
+  lastOnline: String,
   months: [Object],
   projects: [Object],
 });
