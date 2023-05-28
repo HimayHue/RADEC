@@ -151,6 +151,8 @@ async function updateTimesheet(session, query, username){
     }
     else {
 
+      // Create the 3 time
+
       // ***** addNewDay ***** 
       const newDayTimesheet = new DayTimesheet(session.timeIn.getDate())
       console.log(`Created new Day Timesheet for ${username}: ${JSON.stringify(newDayTimesheet)}`);
@@ -163,15 +165,7 @@ async function updateTimesheet(session, query, username){
       newMonthTimesheet.days.push(newDayTimesheet);
 
       // ***** addNewYear *****
-      const newYearTimesheet = new Timesheet({
-            employeeID: query.employeeID,
-            name: username,
-            year: query.year,
-            totalHours: 0,
-            lastOnline: session.timeOut.toLocaleString(),
-            months: [newMonthTimesheet], // Assign the array with newMonth to months property
-            projects: [],
-      });
+      const newYearTimesheet = createNewYearTimesheet(query, username);
 
       // ***** updateTimesheetHours ***** 
       newDayTimesheet.totalHours += session.totalHours;
@@ -191,6 +185,18 @@ async function updateTimesheet(session, query, username){
   catch (error) {
     console.log(`Error updating timesheet: ${error} for ${username}`);
   }
+}
+
+function createNewYearTimesheet(query, username, session) {
+  return new Timesheet({
+    employeeID: query.employeeID,
+    name: username,
+    year: query.year,
+    totalHours: 0,
+    lastOnline: new Date().toLocaleString(),
+    months: [], // Assign the array with newMonth to months property
+    projects: [],
+  });
 }
 
 class DayTimesheet {
