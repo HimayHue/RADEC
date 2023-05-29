@@ -1,9 +1,8 @@
 const { Schema, model } = require("mongoose");
 
 const sessionTimesheetSchema = new Schema({
-  name: String,
-  timeIn: Date,
-  timeOut: Date,
+  timeIn: String,
+  timeOut: String,
   totalHours: Number,
 });
 
@@ -19,6 +18,11 @@ const monthTimesheetSchema = new Schema({
   days: [dayTimesheetSchema],
 });
 
+const projectSchema = new Schema({
+  name: String,
+  value: Number,
+});
+
 const timesheetSchema = new Schema({
   employeeID: String,
   name: String,
@@ -26,17 +30,20 @@ const timesheetSchema = new Schema({
   totalHours: Number,
   lastOnline: String,
   months: [monthTimesheetSchema],
-  projects: [Object],
+  projects: [projectSchema],
+  activeProject: String,
 });
 
 const Timesheet = model("Timesheet", timesheetSchema);
 const SessionTimesheet = model("SessionTimesheet", sessionTimesheetSchema);
 const DayTimesheet = model("DayTimesheet", dayTimesheetSchema);
 const MonthTimesheet = model("MonthTimesheet", monthTimesheetSchema);
+const Project = model("Project", projectSchema);
 
 module.exports = {
   Timesheet,
   SessionTimesheet,
   DayTimesheet,
   MonthTimesheet,
+  Project,
 };
