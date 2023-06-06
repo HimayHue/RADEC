@@ -42,9 +42,16 @@ module.exports = async (client, oldState, newState) => {
     year: currentArizonaYear,
   };
 
-  if (newState.member.roles.cache.has(roleRequiredId)) {
+  if (newState.member.roles.cache.has(roleRequiredId) ) {
+
+    console.log(`\n${username} ${employeesTimeIn[usernameId]}
+    Old state: channel: ${oldState.channelId} deaf: ${oldState.deaf} mute: ${oldState.mute} 
+    New state: channel: ${newState.channelId} deaf: ${newState.deaf} mute: ${newState.mute}`)
+
+    
+    
     // USER JOINS VOICE CHAT
-    if (newState.channelId == voiceChannelId) {
+    if (newState.channelId == voiceChannelId && !employeesTimeIn[usernameId]) {
       //TODO: Set a bool variable named clockedIn
 
       
@@ -53,16 +60,15 @@ module.exports = async (client, oldState, newState) => {
       console.log(`\n${username} is clocking in at ${arizonaDate.toLocaleString()}`);
 
       client.channels.cache
-        .get(timesheetChannelId)
+        .get(timesheetChannelId) 
         .send(
           `[Join] <@${usernameId}> has joined ${
             newState.channel.name
           } - ${arizonaDate.toLocaleString()}`
         );
     }
-
     // USER LEAVES VOICE CHAT
-    else if (oldState.channelId == voiceChannelId) {
+    else if (oldState.channelId == voiceChannelId && newState.channelId != voiceChannelId && employeesTimeIn[usernameId]) {
       //TODO: Set a bool variable named clockedOut
 
       clockOut(
@@ -87,7 +93,7 @@ module.exports = async (client, oldState, newState) => {
     }
   }
 };
-
+ 
 function clockIn(usernameId, timeIn) {
   employeesTimeIn[usernameId] = timeIn;
 }
