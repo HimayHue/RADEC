@@ -44,9 +44,9 @@ module.exports = async (client, oldState, newState) => {
 
   if (newState.member.roles.cache.has(roleRequiredId) ) {
 
-    console.log(`\n${username} ${employeesTimeIn[usernameId]}
-    Old state: channel: ${oldState.channelId} deaf: ${oldState.deaf} mute: ${oldState.mute} 
-    New state: channel: ${newState.channelId} deaf: ${newState.deaf} mute: ${newState.mute}`)
+    //console.log(`\n${username} ${employeesTimeIn[usernameId]}
+    //Old state: channel: ${oldState.channelId} deaf: ${oldState.deaf} mute: ${oldState.mute} 
+    // New state: channel: ${newState.channelId} deaf: ${newState.deaf} mute: ${newState.mute}`)
 
     
     
