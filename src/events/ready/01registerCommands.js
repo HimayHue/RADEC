@@ -18,6 +18,7 @@ module.exports = async (client) => {
         (cmd) => cmd.name === name
       );
 
+      // Checks if command exists and if it's set to delete
       if (existingCommand) {
         if (localCommand.deleted) {
           await applicationCommands.delete(existingCommand.id);
@@ -25,6 +26,7 @@ module.exports = async (client) => {
           continue;
         }
 
+        // Checks if command is different than the one in the API
         if (areCommandsDifferent(existingCommand, localCommand)) {
           await applicationCommands.edit(existingCommand.id, {
             description,
@@ -34,7 +36,7 @@ module.exports = async (client) => {
           console.log(`🔁 Edited command "${name}".`);
         }
       } else {
-        if (localCommand.deleted) {
+        if (localCommand.deleted) {     
           console.log(
             `⏩ Skipping registering command "${name}" as it's set to delete.`
           );
