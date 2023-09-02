@@ -30,7 +30,7 @@ const timesheetSchema = new Schema({
   totalHours: Number,
   lastOnline: String,
   months: [monthTimesheetSchema],
-  projects: [projectSchema],
+  projects: [{ type: Schema.Types.ObjectId, ref: 'Project' }], // Using ref to link to the Project schema
   activeProject: String,
 });
 

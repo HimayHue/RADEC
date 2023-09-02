@@ -1,3 +1,11 @@
+const {
+  Client,
+  Interaction,
+  ApplicationCommandOptionType,
+  PermissionFlagsBits,
+} = require('discord.js');
+
+
 module.exports = {
     name: 'hours',
     description: 'Hours Command',
