@@ -53,12 +53,11 @@ module.exports = {
     await interaction.deferReply();
 
     const dayOption = interaction.options.getInteger('day');
-    const monthOption = interaction.options.getInteger('month');
+    const monthOption = interaction.options.getInteger('month') - 1;
     const yearOption = interaction.options.getInteger('year');
 
     const usernameId = interaction.user.id;
     const username = interaction.user.username;
-    const userTag = interaction.user.displayName;
 
     let totalHours = '';
 
@@ -66,72 +65,109 @@ module.exports = {
     console.log(`Month Option: ${monthOption}`);
     console.log(`Year Option: ${yearOption}`);
 
-    // if only year is provided
 
+    // Year Hours
     if (yearOption && !monthOption && !dayOption) {
       totalHours = await getYearHours(usernameId, yearOption);
 
-      interaction.editReply(
-        `Total Hours for ${userTag} in ${yearOption} is ${totalHours}`
-      );
+      if (totalHours) {
+        interaction.editReply(
+          `Total Hours for <@${usernameId}> in ${yearOption} is ${totalHours}`
+        );
+      }
+      else {
+        interaction.editReply(
+          `No hours found for <@${usernameId}> in ${yearOption}`
+        );
+      }
     }
 
-    // if only month is provided
+    // Year and Month Hours
+    else if (yearOption && monthOption && !dayOption) {
+      totalHours = await getMonthHours(usernameId, yearOption, monthOption);
 
-    // if only day is provided
+      if (totalHours) {
+        interaction.editReply(
+          `Total Hours for <@${usernameId}> in ${monthOption}/${yearOption} is ${totalHours}`
+        );
+      }
+      else {
+        interaction.editReply(
+          `No hours found for <@${usernameId}> in ${monthOption}/${yearOption}`
+        );
+      }
 
-    // if none are provided
 
-  },
-};
+      // if only day is provided
+
+      // if none are provided
+
+    }
+  }
+}
 
 
-async function getDayHours(employeeID) {
+async function getDayHours(usernameId, year, month, day) {
   console.log(`ran get day hours for ${employeeID}`);
-
 }
 
-async function getWeekHours() {
 
-}
-
-async function getMonthHours() {
-
-}
-
-async function getYearHours(usernameId, yearOption) {
-  try {
-    const yearTimesheet = await Timesheet.findOne({ employeeID: usernameId, year: yearOption });
-
-    if (!yearTimesheet) {
-      console.log(`No timesheet found for userId: ${usernameId}`);
-      return; // Return or handle the case where the user's timesheet doesn't exist
-    }
-
-    const totalHours = yearTimesheet.totalHours;
-    console.log(`Total hours for ${usernameId} in 2023: ${totalHours}`);
+async function getMonthHours(usernameId, year, month) {
+  const timesheet = await Timesheet.findOne({ employeeID: usernameId, year: year, month: month });
+  if (!timesheet) {
+    console.log(`No ${month}/${year} timesheet found for userId: ${usernameId}`);
+    return;
+  }
+  else {
+    const totalHours = timesheet.totalHours;
     return totalHours.toString();
+  }
+}
 
+async function getYearHours(usernameId, year) {
+  const timesheet = await Timesheet.findOne({ employeeID: usernameId, year: year });
+
+  if (!timesheet) {
+    console.log(`No ${year} timesheet found for userId: ${usernameId}`);
+    return;
   }
-  catch (error) {
-    console.error(`Error fetching total hours: ${error}`);
-  }
+
+  const totalHours = timesheet.totalHours;
+  return totalHours.toString();
 }
 
 async function getTotalHours(usernameId) {
   try {
-    const yearTimesheet = await Timesheet.findOne({ employeeID: usernameId, year: 2023 });
+    const timesheet = await Timesheet.findOne({ employeeID: usernameId, year: 2023 });
 
-    if (!yearTimesheet) {
+    if (!timesheet) {
       console.log(`No timesheet found for userId: ${usernameId}`);
       return; // Return or handle the case where the user's timesheet doesn't exist
     }
 
-    const totalHours = yearTimesheet.totalHours;
+    const totalHours = timesheet.totalHours;
     console.log(`Total hours for ${usernameId} in 2023: ${totalHours}`);
     return totalHours.toString();
   } catch (error) {
     console.error(`Error fetching total hours: ${error}`);
     // Handle the error appropriately (e.g., logging, sending a message, etc.)
   }
+}
+async function getWeekHours(usernameId) {
+
+}
+
+async function findYearTimesheet() {
+  let yearTimesheet = await Timesheet.findOne({ employeeID: usernameId, year: yearOption });
+  return yearTimesheet;
+}
+
+async function findMonthTimesheet() {
+  let monthTimesheet = await Timesheet.findOne({ employeeID: usernameId, year: yearOption, month: monthOption });
+  return monthTimesheet;
+}
+
+async function findDayTimesheet() {
+  let dayTimesheet = await Timesheet.findOne({ employeeID: usernameId, year: yearOption, month: monthOption, day: dayOption });
+  return dayTimesheet;
 }
