@@ -296,7 +296,7 @@ function createNewSessionTimesheet(timeIn, timeOut) {
   const millisecondsPerHour = 3600000; // Number of milliseconds in an hour
 
   const totalMilliseconds = timeOut.getTime() - timeIn.getTime();
-  const totalHours = (totalMilliseconds / millisecondsPerHour).toFixed(3);
+  const totalHours = parseFloat((totalMilliseconds / millisecondsPerHour).toFixed(3));
 
   const formattedTimeIn = timeIn.toLocaleString("en-US", {
     timeZone: "America/Phoenix",
