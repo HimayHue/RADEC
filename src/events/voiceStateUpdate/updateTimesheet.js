@@ -8,13 +8,18 @@ Important Notes:
 Runs off of Arizona USA Time Zone
 */
 
-const { Client, VoiceState } = require("discord.js");
+const { 
+  Client, 
+  VoiceState 
+} = require("discord.js");
+
 const {
   Timesheet,
   SessionTimesheet,
   DayTimesheet,
   MonthTimesheet,
 } = require("../../models/Timesheet");
+
 require("dotenv").config();
 
 const employeesTimeIn = {};
@@ -30,37 +35,29 @@ module.exports = async (client, oldState, newState) => {
   const username = newState.member.displayName;
   const usernameId = newState.member.user.id;
 
-  let roleRequiredId = process.env.RADEC_ROLE_ID;
-  let voiceChannelId = process.env.RADEC_OFFICE_VOICE_ID;
-  let timesheetChannelId = process.env.TIMESHEET_TEXT_CHANNEL_ID;
+  let roleRequiredID = process.env.RADEC_ROLE_ID;
+  let voiceChannelID = process.env.RADEC_OFFICE_VOICE_ID; // Only tracks the RADEC Office voice channel
+  let timesheetTextChannelID = process.env.TIMESHEET_TEXT_CHANNEL_ID; // The channel where the bot will send messages about users joining and leaving the voice channel
 
   const arizonaDate = new Date();
   const currentArizonaYear = arizonaDate.getFullYear();
 
-  const query = {
+  const databaseQuery = {
     employeeID: usernameId,
     year: currentArizonaYear,
   };
 
-  if (newState.member.roles.cache.has(roleRequiredId) ) {
+  if (newState.member.roles.cache.has(roleRequiredID) ) {
 
-    //console.log(`\n${username} ${employeesTimeIn[usernameId]}
-    //Old state: channel: ${oldState.channelId} deaf: ${oldState.deaf} mute: ${oldState.mute} 
-    // New state: channel: ${newState.channelId} deaf: ${newState.deaf} mute: ${newState.mute}`)
-
-    
-    
     // USER JOINS VOICE CHAT
-    if (newState.channelId == voiceChannelId && !employeesTimeIn[usernameId]) {
+    if (newState.channelId == voiceChannelID && !employeesTimeIn[usernameId]) {
       //TODO: Set a bool variable named clockedIn
-
-      
 
       clockIn(usernameId, arizonaDate);
       console.log(`\n${username} is clocking in at ${arizonaDate.toLocaleString()}`);
 
       client.channels.cache
-        .get(timesheetChannelId) 
+        .get(timesheetTextChannelID) 
         .send(
           `[Join] <@${usernameId}> has joined ${
             newState.channel.name
@@ -68,13 +65,13 @@ module.exports = async (client, oldState, newState) => {
         );
     }
     // USER LEAVES VOICE CHAT
-    else if (oldState.channelId == voiceChannelId && newState.channelId != voiceChannelId && employeesTimeIn[usernameId]) {
+    else if (oldState.channelId == voiceChannelID && newState.channelId != voiceChannelID && employeesTimeIn[usernameId]) {
       //TODO: Set a bool variable named clockedOut
 
       clockOut(
         employeesTimeIn[usernameId],
         arizonaDate,
-        query,
+        databaseQuery,
         username,
         false
       );
@@ -84,7 +81,7 @@ module.exports = async (client, oldState, newState) => {
       delete employeesTimeIn[usernameId];
 
       client.channels.cache
-        .get(timesheetChannelId)
+        .get(timesheetTextChannelID)
         .send(
           `[Left] <@${usernameId}> has Left ${
             oldState.channel.name
@@ -95,8 +92,17 @@ module.exports = async (client, oldState, newState) => {
 };
  
 function clockIn(usernameId, timeIn) {
-  employeesTimeIn[usernameId] = timeIn;
+  // Check if the user is already in the array
+  if (employeesTimeIn.hasOwnProperty(usernameId)) {
+    // User is already in the array, you can handle this case as needed
+    console.log(`User ${usernameId} is already clocked in at ${employeesTimeIn[usernameId]}`);
+  } else {
+    // User is not in the array, so we can clock them in
+    employeesTimeIn[usernameId] = timeIn;
+    console.log(`User ${usernameId} clocked in at ${timeIn}`);
+  }
 }
+
 
 async function clockOut(
   employeeTimeIn,
@@ -334,7 +340,9 @@ function createNewTimesheet(query, username) {
     name: username,
     year: query.year,
     totalHours: 0,
-    lastOnline: new Date().toLocaleString(),
+    lastOnline: new Date().toLocaleString("en-US", {
+      timeZone: "America/Phoenix",
+    }),
     months: [],
     projects: [],
     activeProject: "",
