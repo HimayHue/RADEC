@@ -45,6 +45,11 @@ module.exports = {
       name: 'year',
       description: 'Get hours for the year',
       type: ApplicationCommandOptionType.Integer,
+    },
+    {
+      name: 'project',
+      description: 'Get hours for the project',
+      type: ApplicationCommandOptionType.String,
     }
   ],
   deleted: false,

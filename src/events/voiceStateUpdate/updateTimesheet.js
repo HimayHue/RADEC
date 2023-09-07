@@ -8,9 +8,9 @@ Important Notes:
 Runs off of Arizona USA Time Zone
 */
 
-const { 
-  Client, 
-  VoiceState 
+const {
+  Client,
+  VoiceState
 } = require("discord.js");
 
 const {
@@ -23,6 +23,8 @@ const {
 require("dotenv").config();
 
 const employeesTimeIn = {};
+let employeesActiveProjects= {};
+
 
 /**
  * A function that handles the update of a user's timesheet based on changes in their voice state.
@@ -47,23 +49,30 @@ module.exports = async (client, oldState, newState) => {
     year: currentArizonaYear,
   };
 
-  if (newState.member.roles.cache.has(roleRequiredID) ) {
+  if (newState.member.roles.cache.has(roleRequiredID)) {
 
     // USER JOINS VOICE CHAT
     if (newState.channelId == voiceChannelID && !employeesTimeIn[usernameId]) {
-      //TODO: Set a bool variable named clockedIn
+
+      // TODO: Check if user is clocked in
 
       clockIn(usernameId, arizonaDate);
-      console.log(`\n${username} is clocking in at ${arizonaDate.toLocaleString()}`);
+    
+
+      let timesheet = await Timesheet.findOne(databaseQuery);
+      employeesActiveProjects[usernameId] = timesheet.activeProject;
 
       client.channels.cache
-        .get(timesheetTextChannelID) 
+        .get(timesheetTextChannelID)
         .send(
-          `[Join] <@${usernameId}> has joined ${
-            newState.channel.name
-          } - ${arizonaDate.toLocaleString()}`
+          `[Join] <@${usernameId}> has joined ${newState.channel.name
+          } - ${arizonaDate.toLocaleString()} \n**Active Project: ${timesheet.activeProject}** \n**Year Hours: ${timesheet.totalHours}**`
         );
+
     }
+
+
+
     // USER LEAVES VOICE CHAT
     else if (oldState.channelId == voiceChannelID && newState.channelId != voiceChannelID && employeesTimeIn[usernameId]) {
       //TODO: Set a bool variable named clockedOut
@@ -76,21 +85,23 @@ module.exports = async (client, oldState, newState) => {
         false
       );
 
+      await updateActiveProjectHours(usernameId);
+
       console.log(`\n${username} is clocking out at ${arizonaDate.toLocaleString()}`);
+
 
       delete employeesTimeIn[usernameId];
 
       client.channels.cache
         .get(timesheetTextChannelID)
         .send(
-          `[Left] <@${usernameId}> has Left ${
-            oldState.channel.name
+          `[Left] <@${usernameId}> has Left ${oldState.channel.name
           } - ${arizonaDate.toLocaleString()}`
         );
     }
   }
 };
- 
+
 function clockIn(usernameId, timeIn) {
   // Check if the user is already in the array
   if (employeesTimeIn.hasOwnProperty(usernameId)) {
@@ -100,6 +111,50 @@ function clockIn(usernameId, timeIn) {
     // User is not in the array, so we can clock them in
     employeesTimeIn[usernameId] = timeIn;
     console.log(`User ${usernameId} clocked in at ${timeIn}`);
+  }
+
+
+}
+
+function sendJoinMessage(usernameId, RADEC, timesheetTextChannelID, newState, arizonaDate) {
+  RADEC.channels.cache
+    .get(timesheetTextChannelID)
+    .send(
+      `[Join] <@${usernameId}> has joined ${newState.channel.name} - ${arizonaDate.toLocaleString()}`
+    );
+}
+
+async function updateActiveProjectHours(employeeID) {
+  try {
+    // Find the user's timesheet by employeeID
+    const timesheet = await Timesheet.findOne({ employeeID });
+
+    if (timesheet) {
+      // Find the active project in the user's projects array
+      const activeProject = employeesActiveProjects[employeeID];
+      const millisecondsPerHour = 3600000; // Number of milliseconds in an hour
+      const hoursWorked = parseFloat((new Date().getTime() - employeesTimeIn[employeeID].getTime()) / millisecondsPerHour).toFixed(3);
+      
+      const activeProjectIndex = timesheet.projects.findIndex(
+        (project) => project.name === activeProject
+      );
+
+      if (activeProjectIndex !== -1) {
+        // Update the total time for the active project
+        timesheet.projects[activeProjectIndex].totalTime += hoursWorked;
+
+        // Save the updated timesheet
+        await timesheet.save();
+        console.log(`Updated active project hours for ${employeeID}`);
+      } else {
+        console.log(`Error updating active project hours: Active project not found`);
+      }
+    } else {
+      console.log(`Error updating active project hours: Timesheet not found for employeeID ${employeeID}`);
+    }
+  } catch (error) {
+    console.error('Error updating active project hours:', error);
+    return false; // An error occurred
   }
 }
 
@@ -153,7 +208,7 @@ async function findDayTimesheet(
 
       if (monthIndex != -1) { // -1 means the month was not found
         // Check the days array in the monthTimesheet
-        
+
         // console.log(`Searching for Day ${employeeTimeIn.getDate()}`);
         let dayIndex = yearTimesheet.months[monthIndex].days.findIndex(
           (day) => day.day === employeeTimeIn.getDate()
@@ -283,7 +338,7 @@ async function updateTimesheet(
   yearTimesheet.months[monthIndex].days[dayIndex].sessions.push(
     sessionTimesheet
   );
-  
+
 
   // Mark the 'days' and 'months' arrays as modified
   yearTimesheet.months[monthIndex].markModified("days");
@@ -292,7 +347,7 @@ async function updateTimesheet(
   try {
     await yearTimesheet.save();
     console.log(`\nUpdated timesheet for ${username}`);
-    console.log(`Year Timesheet: ${yearTimesheet}`);
+    // console.log(`Year Timesheet: ${yearTimesheet}`);
   } catch (error) {
     console.log(`Error updating timesheet: ${error} for ${username}`);
   }
