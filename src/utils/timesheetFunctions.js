@@ -1,4 +1,8 @@
-function clockIn() {
+function clockIn(employeesInfo) {
+
+
+
+  
   return new Date();
 }
 
