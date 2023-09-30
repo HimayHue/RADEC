@@ -1,4 +1,4 @@
-function clockIn(employeesInfo) {
+function clockIn(employee, time, employeesInfo) {
 
 
 
