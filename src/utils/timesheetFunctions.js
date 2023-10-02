@@ -1,9 +1,7 @@
-function clockIn(employee, time, employeesInfo) {
+function clockIn(employee, time) {
 
-
-
+  console.log(`${employee} clocked in at ${time}`)
   
-  return new Date();
 }
 
 function clockOut() {
@@ -14,7 +12,7 @@ function calculateHoursWorked(clockIn, clockOut) {
   return clockOut - clockIn;
 }
 
-function findTimesheet() {
+function findYearTimesheet() {
   return timesheet;
 }
 
@@ -29,3 +27,13 @@ function findDayTimesheet() {
 function updateActiveProject() {
   return timesheet;
 }
+
+module.exports = {
+  clockIn,
+  clockOut,
+  calculateHoursWorked,
+  findYearTimesheet,
+  findMonthTimesheet,
+  findDayTimesheet,
+  updateActiveProject
+} 
