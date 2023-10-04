@@ -28,6 +28,14 @@ function updateActiveProject() {
   return timesheet;
 }
 
+function updateHours() {
+
+}
+
+function getHours() {
+
+}
+
 module.exports = {
   clockIn,
   clockOut,
