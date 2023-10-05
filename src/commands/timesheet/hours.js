@@ -63,7 +63,7 @@ module.exports = {
         { name: `28`, value: '28' },
         { name: `29`, value: '29' },
         { name: `30`, value: '30' },
-        { name: `31`, value: '31'}
+        { name: `31`, value: '31' }
       ]
     },
     {
@@ -101,32 +101,48 @@ module.exports = {
   callback: async (client, interaction) => {
     await interaction.deferReply();
 
-
-
     const dayOption = interaction.options.getString('day');
-    const monthOption = interaction.options.getInteger('month');
+    const monthOption = interaction.options.getString('month');
     const yearOption = interaction.options.getInteger('year');
     const projectOption = interaction.options.getString('project');
 
     // Check if day, month, and year options are not provided or blank, then use the current date.
     const currentDate = new Date();
+
+    // if option is == 'current'? use the current date option : else use the option provided
     const day = dayOption === 'current' ? currentDate.getDate() : dayOption;
-    const month = monthOption || currentDate.getMonth() + 1; // Month is 0-based.
-    const year = yearOption || currentDate.getFullYear();
+    const month = monthOption === 'current' ? currentDate.getMonth() + 1 : monthOption; // DB stores month as 1-12, not 0-11
+    const year = yearOption ? yearOption : currentDate.getFullYear();
 
     const databaseQuery = {
       employeeID: interaction.user.id,
       year: year
     };
 
-    // Fetch the timesheet from the database
-    const timesheet = await Timesheet.findOne(databaseQuery);
+    let hours;
 
-    // Now you can use 'day', 'month', 'year', and 'project' as needed in your command logic.
-    // If the user didn't provide these options, they will default to the current date.
+    // CASES
+
+    // 0. Check for no options (current day, month, year)
+    if (dayOption == null && monthOption == null && yearOption == null) {
+    }
+    // 1. Check for a whole year (year)
+    else if (dayOption == null && monthOption == null && yearOption != null) {
+    }
+    // 2. Check for a whole month (month, year)
+    else if (dayOption == null && monthOption != null && yearOption != null) {
+    }
+    // 3. Check for a whole day (day, month, year)
+    else if (dayOption != null && monthOption != null && yearOption != null) {
+      const timesheet = await Timesheet.findOne(databaseQuery);
+
+    }
+    // if no valid options are provided, return an error message
+    else {
+    }
 
     console.log(`Day: ${day}, Month: ${month}, Year: ${year}, Project: ${projectOption}`);
-    interaction.editReply(`Day: ${day}, Month: ${month}, Year: ${year}, Project: ${projectOption}\nTotal Hours: ${timesheet.totalHours}`);
+    interaction.editReply(`Day: ${day}, Month: ${month}, Year: ${year}, Project: ${projectOption}\nTotal Hours: ${hours}`);
 
   },
 };
