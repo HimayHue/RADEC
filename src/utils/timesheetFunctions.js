@@ -12,11 +12,13 @@ function calculateHoursWorked(clockIn, clockOut) {
   return clockOut - clockIn;
 }
 
-function findYearTimesheet() {
-  return timesheet;
+async function findYearTimesheet(query) {
+  let yearTimesheet = await Timesheet.findOne(query);
+  return yearTimesheet;
 }
 
-function findMonthTimesheet() {
+// month is inputed as 1-12
+function findMonthTimesheet(month) {
   return timesheet;
 }
 
