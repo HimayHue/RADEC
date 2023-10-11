@@ -106,6 +106,8 @@ module.exports = {
     // `year` can never be null, so if it is, use current year
     const year = yearOption ? yearOption : currentDate.getFullYear();
 
+    console.log(`NEW HOUR SEARCH INITIATED`);
+
     console.log(`dayOption: ${dayOption}`)
     console.log(`day: ${day}\n`)
 
@@ -140,15 +142,39 @@ module.exports = {
 
         message += `:\n${hours}`;
 
-        interaction.editReply(message);
+        return interaction.editReply(message);
       }
       else {
-        return interaction.editReply(`Timesheet for that date does not exist.`);
+        let message = "Hours not found for";
+
+        if (monthNumber !== null) {
+          message += ` ${monthName}`;
+        }
+        if (day !== null) {
+          message += ` ${day}`;
+        }
+        if (year !== null) {
+          message += ` ${year}`;
+        }
+
+        return interaction.editReply(message);
       }
     }
     catch (error) {
       console.error(error);
-      return interaction.editReply(`Timesheet for that date does not exist.`);
+      let message = "Timesheet not found for";
+
+        if (monthNumber !== null) {
+          message += ` ${monthName}`;
+        }
+        if (day !== null) {
+          message += ` ${day}`;
+        }
+        if (year !== null) {
+          message += ` ${year}`;
+        }
+
+        return interaction.editReply(message);
     }
 
 
