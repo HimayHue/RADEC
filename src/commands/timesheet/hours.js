@@ -7,6 +7,7 @@ Last Edit Notes:
 Important Notes:
 */
 
+
 const {
   Client,
   Interaction,
@@ -15,15 +16,36 @@ const {
 } = require('discord.js');
 
 const { Timesheet } = require("../../models/Timesheet");
+const { findYearTimesheet, getHours } = require('../../utils/timesheetFunctions');
 
 require("dotenv").config();
+
+const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+const daysInMonth = {
+  January: 31,
+  February: 28, // 29 in a leap year
+  March: 31,
+  April: 30,
+  May: 31,
+  June: 30,
+  July: 31,
+  August: 31,
+  September: 30,
+  October: 31,
+  November: 30,
+  December: 31,
+}
+
+let currentDate = new Date();
 
 module.exports = {
   /**
    *
    * @param {Client} client
    * @param {Interaction} interaction
-   */
+  */
+
   name: 'hours',
   description: 'Returns the hours worked for the day, month, or year.',
   options: [
@@ -31,59 +53,25 @@ module.exports = {
       name: 'day',
       description: 'Get hours for selected day.',
       type: ApplicationCommandOptionType.String,
-      choices: [
-        { name: 'Current', value: 'current' },
-        { name: `1`, value: '1' },
-        { name: `2`, value: '2' },
-        { name: `3`, value: '3' },
-        { name: `4`, value: '4' },
-        { name: `5`, value: '5' },
-        { name: `6`, value: '6' },
-        { name: `7`, value: '7' },
-        { name: `8`, value: '8' },
-        { name: `9`, value: '9' },
-        { name: `10`, value: '10' },
-        { name: `11`, value: '11' },
-        { name: `12`, value: '12' },
-        { name: `13`, value: '13' },
-        { name: `14`, value: '14' },
-        { name: `15`, value: '15' },
-        { name: `16`, value: '16' },
-        { name: `17`, value: '17' },
-        { name: `18`, value: '18' },
-        { name: `19`, value: '19' },
-        { name: `20`, value: '20' },
-        { name: `21`, value: '21' },
-        { name: `22`, value: '22' },
-        { name: `23`, value: '23' },
-        { name: `24`, value: '24' },
-        { name: `25`, value: '25' },
-        { name: `26`, value: '26' },
-        { name: `27`, value: '27' },
-        { name: `28`, value: '28' },
-        { name: `29`, value: '29' },
-        { name: `30`, value: '30' },
-        { name: `31`, value: '31' }
-      ]
     },
     {
       name: 'month',
       description: 'Get hours for the selected month.',
       type: ApplicationCommandOptionType.String,
       choices: [
-        { name: 'Current', value: 'current' },
-        { name: `January`, value: '1' },
-        { name: `February`, value: '2' },
-        { name: `March`, value: '3' },
-        { name: `April`, value: '4' },
-        { name: `May`, value: '5' },
-        { name: `June`, value: '6' },
-        { name: `July`, value: '7' },
-        { name: `August`, value: '8' },
-        { name: `September`, value: '9' },
-        { name: `October`, value: '10' },
-        { name: `November`, value: '11' },
-        { name: `December`, value: '12' }
+        { name: 'Current', value: `${currentDate.toLocaleString('en-US', { month: 'long' })}` },
+        { name: `January`, value: 'January' },
+        { name: `February`, value: 'February' },
+        { name: `March`, value: 'March' },
+        { name: `April`, value: 'April' },
+        { name: `May`, value: 'May' },
+        { name: `June`, value: 'June' },
+        { name: `July`, value: 'July' },
+        { name: `August`, value: 'August' },
+        { name: `September`, value: 'September' },
+        { name: `October`, value: 'October' },
+        { name: `November`, value: 'November' },
+        { name: `December`, value: 'December' }
       ]
     },
     {
@@ -98,51 +86,73 @@ module.exports = {
     }
   ],
 
+
   callback: async (client, interaction) => {
     await interaction.deferReply();
 
+
     const dayOption = interaction.options.getString('day');
-    const monthOption = interaction.options.getString('month');
+    let monthOption = interaction.options.getString('month');
     const yearOption = interaction.options.getInteger('year');
     const projectOption = interaction.options.getString('project');
 
-    // Check if day, month, and year options are not provided or blank, then use the current date.
-    const currentDate = new Date();
+    // if day is today or current use current date, otherwise use the option
+    const day = dayOption ? (dayOption.toLowerCase() === 'current' || dayOption.toLowerCase() === 'today' ? currentDate.getDate() : dayOption) : dayOption;
 
-    // if option is == 'current'? use the current date option : else use the option provided
-    const day = dayOption === 'current' ? currentDate.getDate() : dayOption;
-    const month = monthOption === 'current' ? currentDate.getMonth() + 1 : monthOption; // DB stores month as 1-12, not 0-11
+    // if day is selected but month is not or if it is 'current' use current month, else use the option provided
+    const monthName = (dayOption && !monthOption) ? currentDate.toLocaleString('en-US', { month: 'long' }) : monthOption;
+    const monthNumber = monthName ? months.indexOf(monthName) + 1 : monthName;
+
+    // `year` can never be null, so if it is, use current year
     const year = yearOption ? yearOption : currentDate.getFullYear();
 
-    const databaseQuery = {
-      employeeID: interaction.user.id,
-      year: year
-    };
+    console.log(`dayOption: ${dayOption}`)
+    console.log(`day: ${day}\n`)
 
-    let hours;
+    console.log(`monthNumber: ${monthNumber}`)
+    console.log(`monthName: ${monthName}`)
+    console.log(`monthOption: ${monthOption}\n`)
 
-    // CASES
+    console.log(`yearOption: ${year}\n`)
 
-    // 0. Check for no options (current day, month, year)
-    if (dayOption == null && monthOption == null && yearOption == null) {
-    }
-    // 1. Check for a whole year (year)
-    else if (dayOption == null && monthOption == null && yearOption != null) {
-    }
-    // 2. Check for a whole month (month, year)
-    else if (dayOption == null && monthOption != null && yearOption != null) {
-    }
-    // 3. Check for a whole day (day, month, year)
-    else if (dayOption != null && monthOption != null && yearOption != null) {
-      const timesheet = await Timesheet.findOne(databaseQuery);
-
-    }
-    // if no valid options are provided, return an error message
-    else {
+    // if day was selected but is not within range of the month, return error
+    if (day && !(0 < day && day <= daysInMonth[monthName])) {
+      return interaction.editReply(`Invalid day. Please enter a day between 1 and ${daysInMonth[monthOption]}.`);
     }
 
-    console.log(`Day: ${day}, Month: ${month}, Year: ${year}, Project: ${projectOption}`);
-    interaction.editReply(`Day: ${day}, Month: ${month}, Year: ${year}, Project: ${projectOption}\nTotal Hours: ${hours}`);
+    try {
+      console.log(`Searching for hours`);
+      let hours = await getHours(day, monthNumber, year, employeeID = interaction.user.id);
+
+
+      if (hours) {
+        let message = "Searched hours for";
+
+        if (monthNumber !== null) {
+          message += ` ${monthName}`;
+        }
+        if (day !== null) {
+          message += ` ${day}`;
+        }
+        if (year !== null) {
+          message += ` ${year}`;
+        }
+
+        message += `:\n${hours}`;
+
+        interaction.editReply(message);
+      }
+      else {
+        return interaction.editReply(`Timesheet for that date does not exist.`);
+      }
+    }
+    catch (error) {
+      console.error(error);
+      return interaction.editReply(`Timesheet for that date does not exist.`);
+    }
+
+
+
 
   },
 };
