@@ -63,7 +63,7 @@ module.exports = {
       description: 'Get hours for the selected month.',
       type: ApplicationCommandOptionType.String,
       choices: [
-        { name: 'Current', value: `${currentDate.toLocaleString('en-US', { month: 'long' })}` },
+        { name: `Current`, value: 'Current' },
         { name: `January`, value: 'January' },
         { name: `February`, value: 'February' },
         { name: `March`, value: 'March' },
@@ -108,6 +108,9 @@ module.exports = {
     // if `day` is `today` or `current` use current date, otherwise use the day provided
     const day = dayOption ? (dayOption.toLowerCase() === 'current' || dayOption.toLowerCase() === 'today' ? currentDate.getDate() : dayOption) : dayOption;
 
+    // if `month` is `current` use current month, else use the month provided
+    monthOption = monthOption == 'Current' ? currentDate.toLocaleString('en-US', { month: 'long' }) : monthOption; 
+
     // if `day` is selected but `month` is not, or if `day` is 'current' use current month, else use the month provided
     const monthName = (dayOption && !monthOption) ? currentDate.toLocaleString('en-US', { month: 'long' }) : monthOption;
     const monthNumber = monthName ? months.indexOf(monthName) + 1 : monthName;
@@ -116,7 +119,7 @@ module.exports = {
     const year = yearOption ? yearOption : currentDate.getFullYear();
 
     // if day was selected but is not a number, return error
-    if (!/^\d+$/.test(day)) {
+    if (!/^\d+$/.test(day) && day) {
       return interaction.editReply(`Invalid day. Please enter a number.`);
     }
 
