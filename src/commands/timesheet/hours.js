@@ -90,8 +90,8 @@ module.exports = {
   callback: async (client, interaction) => {
     await interaction.deferReply();
 
-    console.log(`interaction username: ${interaction.user.username}`);
-    console.log(`interaction user id: ${interaction.user.id}`);
+    // console.log(`interaction username: ${interaction.user.username}`);
+    // console.log(`interaction user id: ${interaction.user.id}`);
     
     if (interaction.user.username != 'himay') {
       return interaction.editReply('You do not have permission to use this command.');
@@ -113,16 +113,16 @@ module.exports = {
     // `year` can never be null, so if it is, use current year
     const year = yearOption ? yearOption : currentDate.getFullYear();
 
-    console.log(`NEW HOUR SEARCH INITIATED`);
+    // console.log(`NEW HOUR SEARCH INITIATED`);
 
-    console.log(`dayOption: ${dayOption}`)
-    console.log(`day: ${day}\n`)
+    // console.log(`dayOption: ${dayOption}`)
+    // console.log(`day: ${day}\n`)
 
-    console.log(`monthNumber: ${monthNumber}`)
-    console.log(`monthName: ${monthName}`)
-    console.log(`monthOption: ${monthOption}\n`)
+    // console.log(`monthNumber: ${monthNumber}`)
+    // console.log(`monthName: ${monthName}`)
+    // console.log(`monthOption: ${monthOption}\n`)
 
-    console.log(`yearOption: ${year}\n`)
+    // console.log(`yearOption: ${year}\n`)
 
     // if day was selected but is not a number, return error
     if (!/^\d+$/.test(day)) {
@@ -135,7 +135,7 @@ module.exports = {
     }
 
     try {
-      console.log(`Searching for hours`);
+      // console.log(`Searching for hours`);
       let hours = await getHours(day, monthNumber, year, interaction.user.id);
 
 
@@ -173,7 +173,7 @@ module.exports = {
       }
     }
     catch (error) {
-      console.error(error);
+      // console.error(error);
       let message = "Timesheet not found for";
 
         if (monthNumber !== null) {
