@@ -90,6 +90,13 @@ module.exports = {
   callback: async (client, interaction) => {
     await interaction.deferReply();
 
+    console.log(`interaction username: ${interaction.user.username}`);
+    console.log(`interaction user id: ${interaction.user.id}`);
+    
+    if (interaction.user.username != 'himay') {
+      return interaction.editReply('You do not have permission to use this command.');
+    }
+
 
     const dayOption = interaction.options.getString('day');
     let monthOption = interaction.options.getString('month');
@@ -124,7 +131,7 @@ module.exports = {
 
     try {
       console.log(`Searching for hours`);
-      let hours = await getHours(day, monthNumber, year, employeeID = interaction.user.id);
+      let hours = await getHours(day, monthNumber, year, interaction.user.id);
 
 
       if (hours) {

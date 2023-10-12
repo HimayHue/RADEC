@@ -26,6 +26,10 @@ module.exports = {
     callback: async (client, interaction) => {
         await interaction.deferReply();
 
+        if (interaction.user.username != 'himay') {
+            return interaction.editReply('You do not have permission to use this command.');
+        }
+
         const activeProject = interaction.options.getString('projectname');
         const usernameId = interaction.user.id;
         const username = interaction.user.username;

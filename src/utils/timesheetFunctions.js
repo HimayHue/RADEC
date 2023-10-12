@@ -22,10 +22,6 @@ async function findYearTimesheet(employeeID, year) {
     if (timesheet) {
       return timesheet;
     } 
-    else {
-      console.log(`No Timesheet found for year ${year}`);
-      return null;
-    }
 
   } catch (error) {
 
@@ -35,9 +31,11 @@ async function findYearTimesheet(employeeID, year) {
 
 }
 
-async function findMonthTimesheet(databaseQuery, year, monthNumber) {
+async function findMonthTimesheet(employeeID, year, monthNumber) {
   try {
-    const monthTimesheet = await Timesheet.findOne({employeeID: databaseQuery.employeeID, year: year, 'months.month': monthNumber });
+    let yearTimesheet = await findYearTimesheet(employeeID, year);
+    let monthTimesheet = yearTimesheet.months.find((m) => m.month === monthNumber);
+
 
     if (monthTimesheet) {
       return monthTimesheet;
@@ -54,13 +52,11 @@ async function findMonthTimesheet(databaseQuery, year, monthNumber) {
     console.error(`Error while finding month Timesheet for ${monthNumber}/${year}: ${error.message}`);
     throw error;
   }
-  
-
-  return MonthTimesheet;
 }
 
 async function findDayTimesheet(monthTimesheet, day) {
-  return DayTimesheet;
+  let dayTimesheet = monthTimesheet.days.find((d) => d.day === day);
+
 }
 
 function updateActiveProject() {
@@ -77,39 +73,38 @@ async function getHours(day, month, year, employeeID) {
   if (day) {
     // get day hours
     console.log(`Getting day hours for ${month}/${day}/${year}`)
-
-    return
+    return getDayHours(employeeID, year, month, day);
   }
 
   if (month) {
     // get month hours
-    console.log(`Getting month hours for ${month}/${year}`)
-    return
+    console.log(`(getHours): Getting month hours for ${month}/${year}`)
+    return getMonthHours(employeeID, year, month);
   }
 
   if (year) {
     // get year hours
-    console.log(`Getting year hours for ${year}`)
-    let hours = await getYearHours(year, employeeID);
-    return hours;
+    console.log(`(getHours): Getting year hours for ${year}`)
+    return getYearHours(employeeID, year);
   }
 
-
 }
 
-async function getYearHours(year, employeeID) {
-  console.log(`Getting year hours for ${year}`)
-  let timesheet = await findYearTimesheet({ year: year, employeeID: employeeID });
-  return timesheet.totalHours;
+// change it so that if the year is not found it returns null
+async function getYearHours(employeeID, year) {
+  console.log(`(getYearHours): Getting year hours for ${year}`)
+  return (await findYearTimesheet(employeeID, year)).totalHours;
 }
 
-async function getMonthHours(year, month) {
-  console.log(`Getting hours for ${month}/${year}`)
-
+// change it so that if the month is not found it returns null
+async function getMonthHours(employeeID, year, month) {
+  console.log(`(getMonthHours): Getting hours for ${month}/${year}`)
+  return (await findMonthTimesheet(employeeID, year, month)).totalHours;
 }
 
-async function getDayHours(year, month, day) {
-  console.log(`Getting hours for ${month}/${day}/${year}`)
+// change it so that if the day is not found it returns null
+async function getDayHours(employeeID, year, month, day) {
+  console.log(`(getDayHours): Getting hours for ${month}/${day}/${year}`)
 
 }
 
