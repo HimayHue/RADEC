@@ -17,11 +17,11 @@ function calculateHoursWorked(clockIn, clockOut) {
 
 async function findYearTimesheet(employeeID, year) {
   try {
-    const timesheet = await Timesheet.findOne({employeeID: employeeID, year: year});
+    const timesheet = await Timesheet.findOne({ employeeID: employeeID, year: year });
 
     if (timesheet) {
       return timesheet;
-    } 
+    }
 
   } catch (error) {
 
@@ -33,14 +33,12 @@ async function findYearTimesheet(employeeID, year) {
 
 async function findMonthTimesheet(employeeID, year, monthNumber) {
   try {
-    let yearTimesheet = await findYearTimesheet(employeeID, year);
-    let monthTimesheet = yearTimesheet.months.find((m) => m.month === monthNumber);
-
+    let monthTimesheet = (await findYearTimesheet(employeeID, year)).months.find((m) => m.month === monthNumber);
 
     if (monthTimesheet) {
       return monthTimesheet;
-    } 
-    else {
+    }
+    else { // should not run becase it will throw an error???
       console.log(`No Timesheet found for month ${monthNumber}`);
       return null;
     }
@@ -54,8 +52,26 @@ async function findMonthTimesheet(employeeID, year, monthNumber) {
   }
 }
 
-async function findDayTimesheet(monthTimesheet, day) {
-  let dayTimesheet = monthTimesheet.days.find((d) => d.day === day);
+async function findDayTimesheet(employeeID, year, monthNumber, day) {
+
+  try {
+
+    let dayTimesheet = (await findMonthTimesheet(employeeID, year, monthNumber)).days.find((d) => d.day == day);
+
+    if (dayTimesheet) {
+      return dayTimesheet;
+    }
+    else { // should not run becase it will throw an error???
+      console.log(`(findDayTimesheet) No Timesheet found for day ${day}`);
+      return null;
+    }
+
+  }
+  catch (error) {
+    console.error(`Error while finding day Timesheet for ${monthNumber}/${day}/${year}: ${error.message}`);
+    throw error;
+  }
+
 
 }
 
@@ -105,7 +121,7 @@ async function getMonthHours(employeeID, year, month) {
 // change it so that if the day is not found it returns null
 async function getDayHours(employeeID, year, month, day) {
   console.log(`(getDayHours): Getting hours for ${month}/${day}/${year}`)
-
+  return (await findDayTimesheet(employeeID, year, month, day)).totalHours;
 }
 
 module.exports = {
