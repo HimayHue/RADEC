@@ -15,26 +15,47 @@ function calculateHoursWorked(clockIn, clockOut) {
   return clockOut - clockIn;
 }
 
-async function findYearTimesheet(databaseQuery) {
+async function findYearTimesheet(employeeID, year) {
   try {
-    const timesheet = await Timesheet.findOne({ year: databaseQuery.year, employeeID: databaseQuery.employeeID });
+    const timesheet = await Timesheet.findOne({employeeID: employeeID, year: year});
 
     if (timesheet) {
       return timesheet;
-    } else {
-
+    } 
+    else {
       console.log(`No Timesheet found for year ${year}`);
       return null;
     }
+
   } catch (error) {
 
     console.error(`Error while finding Timesheet for year ${year}: ${error.message}`);
     throw error;
   }
+
 }
 
+async function findMonthTimesheet(databaseQuery, year, monthNumber) {
+  try {
+    const monthTimesheet = await Timesheet.findOne({employeeID: databaseQuery.employeeID, year: year, 'months.month': monthNumber });
 
-async function findMonthTimesheet(yearTimesheet, month) {
+    if (monthTimesheet) {
+      return monthTimesheet;
+    } 
+    else {
+      console.log(`No Timesheet found for month ${monthNumber}`);
+      return null;
+    }
+
+    // return (monthTimesheet? monthTimesheet : null)
+
+  }
+  catch (error) {
+    console.error(`Error while finding month Timesheet for ${monthNumber}/${year}: ${error.message}`);
+    throw error;
+  }
+  
+
   return MonthTimesheet;
 }
 
