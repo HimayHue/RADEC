@@ -10,9 +10,7 @@ TODO:
 Implement the project option. It will return the hours worked for the project for the day, month, or year;
 Account for leap years in the daysInMonth object;
 
-
 */
-
 
 const {
   Client,
