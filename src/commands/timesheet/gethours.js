@@ -6,6 +6,7 @@ Last Edit Notes:
 Implemented the hours command. It will return the hours worked for the day, month, or year.
 
 Important Notes:
+TODO: Implement the project option. It will return the hours worked for the project for the day, month, or year.
 */
 
 
@@ -38,7 +39,6 @@ const daysInMonth = {
   December: 31,
 }
 
-let currentDate = new Date();
 
 module.exports = {
   /**
@@ -90,11 +90,13 @@ module.exports = {
 
 
   callback: async (client, interaction) => {
+    let currentDate = new Date();
+
     await interaction.deferReply();
 
     // console.log(`interaction username: ${interaction.user.username}`);
     // console.log(`interaction user id: ${interaction.user.id}`);
-    
+
     if (interaction.user.username != 'himay') {
       return interaction.editReply('You do not have permission to use this command.');
     }
@@ -130,7 +132,7 @@ module.exports = {
     if (!/^\d+$/.test(day)) {
       return interaction.editReply(`Invalid day. Please enter a number.`);
     }
-    
+
     // if day was selected but is not within range of the month, return error
     if (day && !(0 < day && day <= daysInMonth[monthName])) {
       return interaction.editReply(`Invalid day. Please enter a day between 1 and ${daysInMonth[monthOption]}.`);
@@ -178,17 +180,17 @@ module.exports = {
       // console.error(error);
       let message = "Timesheet not found for";
 
-        if (monthNumber !== null) {
-          message += ` ${monthName}`;
-        }
-        if (day !== null) {
-          message += ` ${day}`;
-        }
-        if (year !== null) {
-          message += ` ${year}`;
-        }
+      if (monthNumber !== null) {
+        message += ` ${monthName}`;
+      }
+      if (day !== null) {
+        message += ` ${day}`;
+      }
+      if (year !== null) {
+        message += ` ${year}`;
+      }
 
-        return interaction.editReply(message);
+      return interaction.editReply(message);
     }
 
 
