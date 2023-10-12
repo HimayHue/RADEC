@@ -124,6 +124,11 @@ module.exports = {
 
     console.log(`yearOption: ${year}\n`)
 
+    // if day was selected but is not a number, return error
+    if (!/^\d+$/.test(day)) {
+      return interaction.editReply(`Invalid day. Please enter a number.`);
+    }
+    
     // if day was selected but is not within range of the month, return error
     if (day && !(0 < day && day <= daysInMonth[monthName])) {
       return interaction.editReply(`Invalid day. Please enter a day between 1 and ${daysInMonth[monthOption]}.`);
