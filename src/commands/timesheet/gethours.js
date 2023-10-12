@@ -6,7 +6,11 @@ Last Edit Notes:
 Implemented the hours command. It will return the hours worked for the day, month, or year.
 
 Important Notes:
-TODO: Implement the project option. It will return the hours worked for the project for the day, month, or year.
+TODO: 
+Implement the project option. It will return the hours worked for the project for the day, month, or year;
+Account for leap years in the daysInMonth object;
+
+
 */
 
 
@@ -94,39 +98,24 @@ module.exports = {
 
     await interaction.deferReply();
 
-    // console.log(`interaction username: ${interaction.user.username}`);
-    // console.log(`interaction user id: ${interaction.user.id}`);
-
     if (interaction.user.username != 'himay') {
       return interaction.editReply('You do not have permission to use this command.');
     }
-
 
     const dayOption = interaction.options.getString('day');
     let monthOption = interaction.options.getString('month');
     const yearOption = interaction.options.getInteger('year');
     const projectOption = interaction.options.getString('project');
 
-    // if day is today or current use current date, otherwise use the option
+    // if `day` is `today` or `current` use current date, otherwise use the day provided
     const day = dayOption ? (dayOption.toLowerCase() === 'current' || dayOption.toLowerCase() === 'today' ? currentDate.getDate() : dayOption) : dayOption;
 
-    // if day is selected but month is not or if it is 'current' use current month, else use the option provided
+    // if `day` is selected but `month` is not, or if `day` is 'current' use current month, else use the month provided
     const monthName = (dayOption && !monthOption) ? currentDate.toLocaleString('en-US', { month: 'long' }) : monthOption;
     const monthNumber = monthName ? months.indexOf(monthName) + 1 : monthName;
 
     // `year` can never be null, so if it is, use current year
     const year = yearOption ? yearOption : currentDate.getFullYear();
-
-    // console.log(`NEW HOUR SEARCH INITIATED`);
-
-    // console.log(`dayOption: ${dayOption}`)
-    // console.log(`day: ${day}\n`)
-
-    // console.log(`monthNumber: ${monthNumber}`)
-    // console.log(`monthName: ${monthName}`)
-    // console.log(`monthOption: ${monthOption}\n`)
-
-    // console.log(`yearOption: ${year}\n`)
 
     // if day was selected but is not a number, return error
     if (!/^\d+$/.test(day)) {
@@ -139,9 +128,7 @@ module.exports = {
     }
 
     try {
-      // console.log(`Searching for hours`);
       let hours = await getHours(day, monthNumber, year, interaction.user.id);
-
 
       if (hours) {
         let message = "Searched hours for";
@@ -177,7 +164,6 @@ module.exports = {
       }
     }
     catch (error) {
-      // console.error(error);
       let message = "Timesheet not found for";
 
       if (monthNumber !== null) {
@@ -192,9 +178,5 @@ module.exports = {
 
       return interaction.editReply(message);
     }
-
-
-
-
   },
 };
