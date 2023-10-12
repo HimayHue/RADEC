@@ -106,19 +106,16 @@ async function getHours(day, month, year, employeeID) {
 
 }
 
-// change it so that if the year is not found it returns null
 async function getYearHours(employeeID, year) {
   // console.log(`(getYearHours): Getting year hours for ${year}`)
   return (await findYearTimesheet(employeeID, year)).totalHours;
 }
 
-// change it so that if the month is not found it returns null
 async function getMonthHours(employeeID, year, month) {
   // console.log(`(getMonthHours): Getting hours for ${month}/${year}`)
   return (await findMonthTimesheet(employeeID, year, month)).totalHours;
 }
 
-// change it so that if the day is not found it returns null
 async function getDayHours(employeeID, year, month, day) {
   // console.log(`(getDayHours): Getting hours for ${month}/${day}/${year}`)
   return (await findDayTimesheet(employeeID, year, month, day)).totalHours;

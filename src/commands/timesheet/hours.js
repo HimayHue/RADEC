@@ -1,8 +1,9 @@
 /* 
 Created By: Himay
 Creation Date: 9/02/2023
-Last Edit Date: 10/03/2023
+Last Edit Date: 10/11/2023
 Last Edit Notes:
+Implemented the hours command. It will return the hours worked for the day, month, or year.
 
 Important Notes:
 */
