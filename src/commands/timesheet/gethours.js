@@ -47,8 +47,9 @@ module.exports = {
    * @param {Interaction} interaction
   */
 
-  name: 'hours',
+  name: 'gethours',
   description: 'Returns the hours worked for the day, month, or year.',
+  deleted: false,
   options: [
     {
       name: 'day',
