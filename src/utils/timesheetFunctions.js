@@ -1,19 +1,50 @@
 const { get } = require("mongoose");
 const { Timesheet, DayTimesheet, MonthTimesheet } = require("../models/Timesheet");
 
+let employeeInfo = {};
+
+/* ****************
+ * 
+ * TIMESHEET FUNCTIONS
+ * 
+ * ***************/
+
+// Make clockIn and clockOut check if the employee is already clocked in or out
 function clockIn(employee, time) {
-
+  // employeeInfo[username].clockedInTime = time;
   console.log(`${employee} clocked in at ${time}`)
-
+  employeeInfo[employee] = { clockedInTime: time };
 }
 
-function clockOut() {
-  return new Date();
+function clockOut(employee, clockedOutTime) {
+  // Check if the employee is clocked in
+  console.log(`ran clockOut for ${employee}`);
+  if (employeeInfo[employee] && employeeInfo[employee].clockedInTime) {
+    
+    const hoursWorked = calculateHoursWorked(employeeInfo[employee].clockedInTime, clockedOutTime);
+    employeeInfo[employee] = { clockedInTime: null };
+
+    return {
+      clockedOutTime: clockedOutTime.toLocaleString(),
+      hoursWorked: hoursWorked.toFixed(3),
+    };
+
+  }
+  else {
+    return null;
+  }
 }
 
 function calculateHoursWorked(clockIn, clockOut) {
-  return clockOut - clockIn;
+  const millisecondsWorked = clockOut - clockIn;
+  const hoursWorked = millisecondsWorked / (1000 * 60 * 60); // Convert milliseconds to hours
+  return hoursWorked;
 }
+/* ****************
+ * 
+ * DATABASE FUNCTIONS
+ *
+ * ****************/
 
 async function findYearTimesheet(employeeID, year) {
   try {
@@ -79,10 +110,6 @@ function updateActiveProject() {
   return timesheet;
 }
 
-function updateHours() {
-
-}
-
 async function getHours(day, month, year, employeeID) {
   // a possible way of doing is adding up the options (they must be assigned a value) inputed and using a switch case based on that
 
@@ -121,7 +148,12 @@ async function getDayHours(employeeID, year, month, day) {
   return (await findDayTimesheet(employeeID, year, month, day)).totalHours;
 }
 
+async function saveHoursToDatabase(){
+
+}
+
 module.exports = {
+  employeeInfo,
   clockIn,
   clockOut,
   calculateHoursWorked,
