@@ -9,7 +9,6 @@ Important Notes:
 
 const { Client, Interaction, ApplicationCommandOptionType, MessageActionRow, MessageButtonComponent } = require('discord.js');
 const { clockOut } = require('../../utils/timesheetFunctions');
-let { employeeInfo } = require('../../utils/timesheetFunctions');
 require('dotenv').config();
 
 // Define an object to store employee information
@@ -31,7 +30,9 @@ module.exports = {
         if (clockOutInfo) {
             return interaction.editReply(`You have clocked out at ${clockOutInfo.clockedOutTime.toLocaleString()}. You worked ${clockOutInfo.hoursWorked} hours.`);
         }
+        else {
+            return interaction.editReply(`You are not clocked in.`);
+        }
 
-        return interaction.editReply(`You are not clocked in.`);
     }
 };

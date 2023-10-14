@@ -9,10 +9,8 @@ Important Notes:
 
 const { Client, Interaction, ApplicationCommandOptionType, MessageActionRow, MessageButtonComponent } = require('discord.js');
 const { clockIn } = require('../../utils/timesheetFunctions');
-let { employeeInfo } = require('../../utils/timesheetFunctions');
+let { employeesInfo } = require('../../utils/timesheetFunctions');
 require('dotenv').config();
-
-// Define an object to store employee information
 
 module.exports = {
     name: 'clockin',
@@ -34,22 +32,17 @@ module.exports = {
         const usernameId = interaction.user.id;
         const username = interaction.user.username;
 
-        // if (username !== 'himay') {
-        //     return interaction.editReply('You do not have permission to use this command.');
-        // }
+        let clockedInTime = clockIn(username, usernameId, new Date());
 
-        console.log(`\nemployeeInfo: ${employeeInfo}`);
-        console.log(`username: ${username}`);
-        console.log(`usernameId: ${usernameId}`);
-        console.log(`EmployeeInfo[username]: ${employeeInfo[username]}`);
-
-        let clockedInTime = clockIn(username, new Date());
         if (clockedInTime) {
-            console.log(`\nDiscord /clockin ${JSON.stringify(clockedInTime)}`);
+
             return interaction.editReply(`You have clocked in at ${clockedInTime.toLocaleString()}`);
         }
-        
-        return interaction.editReply(`You are already clocked in at ${employeeInfo[username].clockedInTime.toLocaleString()}`);
-        
+        else {
+
+            console.log(`\nemployeeInfo: ${JSON.stringify(employeesInfo)}`);
+            return interaction.editReply(`You are already clocked in at ${employeesInfo[username].clockedInTime.toLocaleString()}`);
+        }
+
     }
 };
