@@ -43,14 +43,13 @@ module.exports = {
         console.log(`usernameId: ${usernameId}`);
         console.log(`EmployeeInfo[username]: ${employeeInfo[username]}`);
 
-        if (employeeInfo[username] != undefined) {
-            if (employeeInfo[username].clockedInTime != undefined) {
-                return interaction.editReply(`You are already clocked in at ${employeeInfo[username].clockedInTime.toLocaleString()}`);
-            }
+        let clockedInTime = clockIn(username, new Date());
+        if (clockedInTime) {
+            console.log(`\nDiscord /clockin ${JSON.stringify(clockedInTime)}`);
+            return interaction.editReply(`You have clocked in at ${clockedInTime.toLocaleString()}`);
         }
-        else {
-            clockIn(username, new Date());
-            return interaction.editReply(`You have clocked in at ${employeeInfo[username].clockedInTime.toLocaleString()}`);
-        }
+        
+        return interaction.editReply(`You are already clocked in at ${employeeInfo[username].clockedInTime.toLocaleString()}`);
+        
     }
 };

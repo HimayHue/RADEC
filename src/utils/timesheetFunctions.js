@@ -10,10 +10,13 @@ let employeeInfo = {};
  * ***************/
 
 // Make clockIn and clockOut check if the employee is already clocked in or out
-function clockIn(employee, time) {
-  // employeeInfo[username].clockedInTime = time;
-  console.log(`${employee} clocked in at ${time}`)
-  employeeInfo[employee] = { clockedInTime: time };
+function clockIn(employee, clockedInTime) {
+  // Check if you are already clocked in do not clock in again
+  console.log(`timesheetFunctions clockIn: ${employeeInfo[employee]}`)
+  if (employeeInfo[employee] && employeeInfo[employee].clockedInTime) return null;
+
+  employeeInfo[employee] = { clockedInTime: clockedInTime };
+  return clockedInTime;
 }
 
 function clockOut(employee, clockedOutTime) {
@@ -25,7 +28,7 @@ function clockOut(employee, clockedOutTime) {
     employeeInfo[employee] = { clockedInTime: null };
 
     return {
-      clockedOutTime: clockedOutTime.toLocaleString(),
+      clockedOutTime: clockedOutTime,
       hoursWorked: hoursWorked.toFixed(3),
     };
 
