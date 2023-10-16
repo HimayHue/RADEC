@@ -41,8 +41,8 @@ module.exports = async (client, oldState, newState) => {
   let voiceChannelID = process.env.RADEC_OFFICE_VOICE_ID; // Only tracks the RADEC Office voice channel
   let timesheetTextChannelID = process.env.TIMESHEET_TEXT_CHANNEL_ID; // The channel where the bot will send messages about users joining and leaving the voice channel
 
-  const arizonaDate = new Date();
-  const currentArizonaYear = arizonaDate.getFullYear();
+  const currentDate = new Date();
+  const currentArizonaYear = currentDate.getFullYear();
 
   const databaseQuery = {
     employeeID: usernameId,
@@ -56,7 +56,7 @@ module.exports = async (client, oldState, newState) => {
 
       // TODO: Check if user is clocked in
 
-      clockIn(usernameId, arizonaDate);
+      clockIn(usernameId, currentDate);
     
 
       let timesheet = await Timesheet.findOne(databaseQuery);
@@ -66,7 +66,7 @@ module.exports = async (client, oldState, newState) => {
         .get(timesheetTextChannelID)
         .send(
           `[Join] <@${usernameId}> has joined ${newState.channel.name
-          } - ${arizonaDate.toLocaleString()} \n**Active Project: ${timesheet.activeProject}** \n**Year Hours: ${timesheet.totalHours}**`
+          } - ${currentDate.toLocaleString()} \n**Active Project: ${timesheet.activeProject}** \n**Year Hours: ${timesheet.totalHours}**`
         );
 
     }
@@ -79,7 +79,7 @@ module.exports = async (client, oldState, newState) => {
 
       clockOut(
         employeesTimeIn[usernameId],
-        arizonaDate,
+        currentDate,
         databaseQuery,
         username,
         false
@@ -87,7 +87,7 @@ module.exports = async (client, oldState, newState) => {
 
       await updateActiveProjectHours(usernameId);
 
-      console.log(`\n${username} is clocking out at ${arizonaDate.toLocaleString()}`);
+      console.log(`\n${username} is clocking out at ${currentDate.toLocaleString()}`);
 
 
       delete employeesTimeIn[usernameId];
@@ -96,7 +96,7 @@ module.exports = async (client, oldState, newState) => {
         .get(timesheetTextChannelID)
         .send(
           `[Left] <@${usernameId}> has Left ${oldState.channel.name
-          } - ${arizonaDate.toLocaleString()}`
+          } - ${currentDate.toLocaleString()}`
         );
     }
   }

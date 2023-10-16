@@ -1,10 +1,19 @@
 const { Schema, model } = require("mongoose");
 
+const projectSchema = new Schema(
+  {
+    name: String,
+    value: Number,
+  },
+  { _id: false } // Prevent MongoDB from creating a separate collection for this schema
+  );
+
 const sessionTimesheetSchema = new Schema(
   {
     timeIn: String,
     timeOut: String,
     totalHours: Number,
+    projectsWorkedOn: [projectSchema],
   }, { _id: false } // Prevent MongoDB from creating a separate collection for this schema
 );
 
@@ -26,13 +35,6 @@ const monthTimesheetSchema = new Schema(
   { _id: false } // Prevent MongoDB from creating a separate collection for this schema
 );
 
-const projectSchema = new Schema(
-  {
-    name: String,
-    value: Number,
-  },
-  { _id: false } // Prevent MongoDB from creating a separate collection for this schema
-);
 
 const timesheetSchema = new Schema(
   {

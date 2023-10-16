@@ -27,7 +27,6 @@ module.exports = {
     callback: async (client, interaction) => {
         await interaction.deferReply();
 
-
         const activeProject = interaction.options.getString('projectname');
         const usernameId = interaction.user.id;
         const username = interaction.user.username;

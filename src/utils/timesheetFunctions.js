@@ -17,7 +17,7 @@ let employeesInfo = {};
 /* ****************
  * 
  * TIMESHEET FUNCTIONS
- * S
+ * 
  * These functions are used to manipulate the timesheet
  * 
  * ***************/
@@ -120,6 +120,7 @@ function createNewSessionTimesheet(timeIn, timeOut) {
     timeIn: formattedTimeIn,
     timeOut: formattedTimeOut,
     totalHours: parseFloat(totalHours),
+    projectsWorkedOn: [],
   });
 }
 
@@ -137,7 +138,13 @@ async function findYearTimesheet(employeeID, year, mustExist = false) {
     if (yearTimesheet) return yearTimesheet;
   } 
   catch (error) {
-    return null;
+    if (mustExist) {
+      let yearTimesheet = createYearNewTimesheet(employeeID, year);
+      return yearTimesheet;
+    }
+    else {
+      return null;
+    }
   }
 }
 
@@ -147,7 +154,13 @@ async function findMonthTimesheet(employeeID, year, monthNumber, mustExist = fal
     if (monthTimesheet) return monthTimesheet;
   }
   catch (error) {
-    return null;
+    if (mustExist) {
+      let monthTimesheet = createNewMonthTimesheet(monthNumber);
+      return monthTimesheet;
+    }
+    else {
+      return null;
+    }
   }
 }
 
