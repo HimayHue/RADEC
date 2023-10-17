@@ -3,7 +3,7 @@ const { Schema, model } = require("mongoose");
 const projectSchema = new Schema(
   {
     name: String,
-    value: Number,
+    totalHours: Number,
   },
   { _id: false } // Prevent MongoDB from creating a separate collection for this schema
   );
@@ -13,7 +13,7 @@ const sessionTimesheetSchema = new Schema(
     timeIn: String,
     timeOut: String,
     totalHours: Number,
-    projectsWorkedOn: [projectSchema],
+    projectsWorkedOn: Map,
   }, { _id: false } // Prevent MongoDB from creating a separate collection for this schema
 );
 
@@ -51,8 +51,7 @@ const timesheetSchema = new Schema(
         lastWorkedDate: String,
         totalTime: Number,
       }      
-    ], // Using ref to link to the Project schema
-    activeProject: String,
+    ], 
   }
 );
 

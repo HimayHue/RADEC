@@ -15,7 +15,8 @@ require('dotenv').config();
 
 module.exports = {
     name: 'clockout',
-    description: 'Timesheet Commands',
+    deleted: false,
+    description: 'Clock Out',
     options: [
     ],
 
