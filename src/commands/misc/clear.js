@@ -11,8 +11,8 @@ const { Client, Interaction, ApplicationCommandOptionType } = require('discord.j
 
 module.exports = {
     name: 'clear',
-    description: 'Timesheet Commands',
-    deleted: true,
+    description: 'Clears Messages',
+    deleted: false,
     options: [
         {
             name: 'user',
