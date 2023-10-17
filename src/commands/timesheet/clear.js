@@ -16,7 +16,7 @@ module.exports = {
         {
             name: 'user',
             description: 'Name of the user to clear messages for',
-            type: ApplicationCommandOptionType.String,
+            type: ApplicationCommandOptionType.User,
             required: false,
         },
         {
@@ -30,9 +30,11 @@ module.exports = {
     callback: async (client, interaction) => {
         await interaction.deferReply();
     
-        let user = interaction.options.getString('user');
+        let user = interaction.options.getUser('user');
         let amount = interaction.options.getInteger('amount');
         const isAdmin = interaction.member.roles.cache.some(role => role.name === 'Radec');
+
+        console.log(`User: ${user} | Amount: ${amount} | User ID: ${user.id}`)
         
         if (!user) user = interaction.user.id;
         if (!amount) amount = 10;
@@ -47,12 +49,12 @@ module.exports = {
 
 
         let messages = await interaction.channel.messages.fetch({ limit: amount });
-        messages = messages.filter(message => message.author.id === user);
-        authodIds = messages.map(message => message.author.id);
+        messages = messages.filter(message => message.author.id === user.id);
+
+        console.log(`Message size: ${messages.size}`);
+        console.log(`messages: ${messages}`);
     
-        console.log(authodIds);
-    
-        // interaction.channel.bulkDelete(messages);
+        interaction.channel.bulkDelete(messages);
     
         return interaction.editReply(`You have cleared ${messages.size} messages for ${user}.`);
     }
