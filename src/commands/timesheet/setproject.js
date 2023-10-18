@@ -26,29 +26,14 @@ module.exports = {
     ],
 
     callback: async (client, interaction) => {
+        console.log(`\nSET PROJECT COMMAND`);
         await interaction.deferReply();
 
         const newActiveProject = interaction.options.getString('project').toLowerCase();
-        const usernameId = interaction.user.id;
-        const username = interaction.user.username;
-        const employeeInfo = employeesInfo[username];
-        const previousActiveProject = employeeInfo.activeProject;
+        const employeeID = interaction.user.id;
 
-        if (!employeeInfo) {
-            return interaction.editReply(`You are not clocked in.`);
-        }
+        let setActiveProjectOutput = setActiveProject(employeeID, newActiveProject);
 
-        if (employeeInfo.activeProject === newActiveProject) {
-            return interaction.editReply(`You are already working on ${newActiveProject}.`);
-        }
-
-        const hoursWorked = setActiveProject(employeeInfo, newActiveProject);
-        console.log(`hoursWorked: ${hoursWorked}`);
-        if (hoursWorked) {
-            return interaction.editReply(`You are now working on ${newActiveProject}. You worked ${hoursWorked} hours on ${previousActiveProject}.`);
-        }
-        else {
-            return interaction.editReply(`You are now working on ${newActiveProject}.`);
-        }        
+        return interaction.editReply(`${setActiveProjectOutput}`);
     }
 };

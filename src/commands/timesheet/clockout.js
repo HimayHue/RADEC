@@ -24,18 +24,12 @@ module.exports = {
     callback: async (client, interaction) => {
         await interaction.deferReply();
 
-        const activeProject = interaction.options.getString('projectname');
-        const usernameId = interaction.user.id;
-        const username = interaction.user.username;
-        let employeeInfo = employeesInfo[username];
+        const employeeID = interaction.user.id;
 
-        let clockOutInfo = clockOut(employeeInfo, new Date(), username);
-        if (clockOutInfo) {
-            return interaction.editReply(`You have clocked out at ${clockOutInfo.clockedOutTime.toLocaleString()}. You worked ${clockOutInfo.hoursWorked} hours.`);
-        }
-        else {
-            return interaction.editReply(`You are not clocked in.`);
-        }
+        let clockOutInfo = clockOut(employeeID, new Date());
+
+        return interaction.editReply(`${clockOutInfo}`);
+        
 
     }
 };

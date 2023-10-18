@@ -35,22 +35,12 @@ module.exports = {
         
         // if project is specified, set it as the active project
         const activeProject = interaction.options.getString('project')? interaction.options.getString('project').toLowerCase() : null;
-        const usernameId = interaction.user.id;
-        const username = interaction.user.username;
-        console.log(`Employee Info: ${JSON.stringify(employeesInfo)}`);
+        const employeeID = interaction.user.id;
+        const employeeName = interaction.user.username;
 
-        console.log(`project: ${activeProject}`);
-        let clockedInTime = clockIn(username, usernameId, new Date(), activeProject);
+        let clockInOutput = clockIn(employeeID, employeeName, new Date(), activeProject);
 
-        if (clockedInTime) {
-            console.log(`\nemployeeInfo: ${JSON.stringify(employeesInfo)}`);
-            return interaction.editReply(`You have clocked in at ${clockedInTime.toLocaleString()}`);
-        }
-        else {
-
-            console.log(`\nemployeeInfo: ${JSON.stringify(employeesInfo)}`);
-            return interaction.editReply(`You are already clocked in at ${employeesInfo[username].clockedInTime.toLocaleString()}`);
-        }
+        return interaction.editReply(`${clockInOutput}`);
 
     }
 };
