@@ -26,7 +26,7 @@ module.exports = {
 
     callback: async (client, interaction) => {
         await interaction.deferReply();
-
+        console.log(`\nCLOCK IN COMMAND`);
         // only allow users with Radec role to clock in
         const role = interaction.guild.roles.cache.find(role => role.name === "Radec");
         if (!interaction.member.roles.cache.has(role.id)) {
@@ -37,6 +37,7 @@ module.exports = {
         const activeProject = interaction.options.getString('project')? interaction.options.getString('project').toLowerCase() : null;
         const usernameId = interaction.user.id;
         const username = interaction.user.username;
+        console.log(`Employee Info: ${JSON.stringify(employeesInfo)}`);
 
         console.log(`project: ${activeProject}`);
         let clockedInTime = clockIn(username, usernameId, new Date(), activeProject);

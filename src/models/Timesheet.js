@@ -13,7 +13,7 @@ const sessionTimesheetSchema = new Schema(
     timeIn: String,
     timeOut: String,
     totalHours: Number,
-    projectsWorkedOn: Map,
+    projectsWorkedOn: [projectSchema],
   }, { _id: false } // Prevent MongoDB from creating a separate collection for this schema
 );
 

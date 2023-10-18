@@ -36,6 +36,7 @@ let employeesInfo = {};
 
 // Make clockIn and clockOut check if the employee is already clocked in or out
 function clockIn(employeeName, employeeID, clockedInTime, project = null) {
+  console.log(`\nCLOCK IN`);
   const employeeInfoExists = employeesInfo[employeeName];
 
   if (!employeeInfoExists) {
@@ -54,6 +55,7 @@ function clockIn(employeeName, employeeID, clockedInTime, project = null) {
         console.log(`Key: ${key}, Value: ${value}`);
       });
     }
+    
 
     return clockedInTime;
   }
@@ -68,21 +70,29 @@ function clockIn(employeeName, employeeID, clockedInTime, project = null) {
 
 }
 
-function clockOut(employeeUsername, clockedOutTime) {
+// TODO swap parameter from employeeUsername to employeeInfo
+function clockOut(employeeInfo, clockedOutTime, employeeUsername) {
   // Check if the employee is clocked in
-  console.log(`ran clockOut for ${employeeUsername}`);
+  console.log(`\nCLOCK OUT`);
 
-  const employeeIsClockedIn = employeesInfo[employeeUsername] && employeesInfo[employeeUsername].clockedInTime;
+  const employeeIsClockedIn = employeeInfo && employeeInfo.clockedInTime;
 
   if (employeeIsClockedIn) {
-    const hoursWorked = calculateHoursWorked(employeesInfo[employeeUsername].clockedInTime, clockedOutTime);
-    const clockedInTime = employeesInfo[employeeUsername].clockedInTime;
+    const hoursWorked = calculateHoursWorked(employeeInfo.clockedInTime, clockedOutTime);
+    const clockedInTime = employeeInfo.clockedInTime;
 
-    let sessionsTimesheet = createNewSessionTimesheet(clockedInTime, clockedOutTime, employeesInfo[employeeUsername]);
+    // Add the hours worked on the active project to the projectsWorkedOn map
+    if (employeeInfo.activeProject) {
+      const currentHoursWorked = employeeInfo.projectsWorkedOn.get(employeeInfo.activeProject);
+      const totalHoursWorked = currentHoursWorked + hoursWorked;
+      employeeInfo.projectsWorkedOn.set(employeeInfo.activeProject, totalHoursWorked);
+    }
+
+    let sessionsTimesheet = createNewSessionTimesheet(clockedInTime, clockedOutTime, employeeInfo);
     console.log(`sessionsTimesheet: ${JSON.stringify(sessionsTimesheet)}`);
     console.log(`sessionsTimesheet.projectsWorkedOn: ${JSON.stringify(sessionsTimesheet.projectsWorkedOn)}`);
 
-    employeesInfo[employeeUsername] = { clockedInTime: null };
+    delete employeesInfo[employeeUsername];
 
     return {
       clockedOutTime: clockedOutTime,
@@ -103,7 +113,11 @@ function calculateHoursWorked(clockIn, clockOut) {
 
 // Should only be called when the employee is clocked in
 function setActiveProject(employeeInfo, newProject) {
+  console.log(`\nSET ACTIVE PROJECT`);
   const activeProject = employeeInfo.activeProject;
+
+  // check if employee is swithcing to the same project
+  // if (activeProject === newProject) return null;
 
   let hoursWorked;
 
@@ -114,10 +128,14 @@ function setActiveProject(employeeInfo, newProject) {
     const totalHoursWorked = currentHoursWorked + hoursWorked;
     employeeInfo.projectsWorkedOn.set(activeProject, totalHoursWorked);
   }
-
+  if (!employeeInfo.projectsWorkedOn) employeeInfo.projectsWorkedOn = new Map();
+  
   employeeInfo.activeProject = newProject;
   employeeInfo.projectStarted = new Date();
-  if (!employeeInfo.projectsWorkedOn) employeeInfo.projectsWorkedOn = new Map();
+  // check if the employee has worked on the project before during this session
+  if (!employeeInfo.projectsWorkedOn.has(newProject)) return hoursWorked;
+
+  // If the employee has not worked on the project before during this session, add it to the projectsWorkedOn map
   employeeInfo.projectsWorkedOn.set(newProject, 0);
 
   return hoursWorked;
@@ -156,27 +174,27 @@ function createNewDayTimesheet(day) {
 }
 
 function createNewSessionTimesheet(timeIn, timeOut, employeeInfo) {
-  console.log(`ran createNewSessionTimesheet`);
+  console.log(`\nCREATE NEW SESSION TIMESHEET`);
   const millisecondsPerHour = 3600000; // Number of milliseconds in an hour
 
   const totalMilliseconds = timeOut.getTime() - timeIn.getTime();
   const totalHours = parseFloat((totalMilliseconds / millisecondsPerHour).toFixed(3));
 
-  let projects;
+  let projectArray;
 
   if (employeeInfo.projectsWorkedOn) {
-    projects = Array.from(employeeInfo.projectsWorkedOn).map(([projectName, hoursWorked]) => {
-      return `${projectName} (${hoursWorked})`;
+    projectArray = Array.from(employeeInfo.projectsWorkedOn).map(([projectName, totalHours]) => {
+      return { name: projectName, totalHours };
     });
   }
 
-  console.log(`projects: ${JSON.stringify(projects)}`);
+  console.log(`projects: ${JSON.stringify(projectArray)}`);
 
   return new SessionTimesheet({
     timeIn: timeIn.toLocaleString(),
     timeOut: timeOut.toLocaleString(),
     totalHours: parseFloat(totalHours),
-    projectsWorkedOn: projects, // Now projects is accessible here
+    projectsWorkedOn: projectArray, // Now projects is accessible here
   });
 
 }
