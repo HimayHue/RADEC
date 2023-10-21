@@ -1,5 +1,5 @@
 const { get } = require("mongoose");
-const { Timesheet, MonthTimesheet, dayTimesheet, SessionTimesheet } = require("../models/Timesheet");
+const { Timesheet, MonthTimesheet, DayTimesheet, SessionTimesheet } = require("../models/Timesheet");
 
 
 let clockedInEmployees = {};
@@ -68,7 +68,7 @@ function clockIn(employeeID, employeeName, clockedInTime, project = null) {
 }
 
 
-function clockOut(employeeID, clockedOutTime) {
+async function clockOut(employeeID, clockedOutTime) {
   console.log(`\nCLOCK OUT`);
   // Check if the employee is clocked in
   const employeeInfo = clockedInEmployees[employeeID];
@@ -93,10 +93,11 @@ function clockOut(employeeID, clockedOutTime) {
   console.log(`Session Timesheet: ${JSON.stringify(sessionTimesheet)}`);
   console.log(`Session Timesheet projects: ${JSON.stringify(sessionTimesheet.projectsWorkedOn)}`);
 
+  await saveShiftToDatabase(sessionTimesheet, employeeID);
+
   delete clockedInEmployees[employeeID];
   console.log(`Deleted employee from clockedInEmployees: ${JSON.stringify(clockedInEmployees)}`);
 
-  saveShiftToDatabase(sessionTimesheet);
   return `You have clocked out at ${clockedOutTime.toLocaleString()}. You worked ${hoursWorked} hours.`
 
 }
@@ -133,10 +134,10 @@ function setActiveProject(employeeID, newActiveProject) {
     employeeInfo.projectsWorkedOn.set(employeeInfo.activeProject, totalHoursWorked);
 
     // check if newActiveProject is null
-    if (!newActiveProject || newActiveProject == "null" || newActiveProject == "none"){
+    if (!newActiveProject || newActiveProject == "null" || newActiveProject == "none") {
       employeeInfo.activeProject = null;
       employeeInfo.projectStarted = null;
-      
+
       // print out the projectsWorkedOn map
       employeeInfo.projectsWorkedOn.forEach((value, key) => {
         console.log(`Key: ${key}, Value: ${value}`);
@@ -163,7 +164,7 @@ function setActiveProject(employeeID, newActiveProject) {
   else {
     // check if newActiveProject is null
     // This if statement should run when you clock out without having an active project
-    if (!newActiveProject || newActiveProject == "null" || newActiveProject == "none"){
+    if (!newActiveProject || newActiveProject == "null" || newActiveProject == "none") {
       employeeInfo.activeProject = null;
       employeeInfo.projectStarted = null;
       // print out the projectsWorkedOn map
@@ -189,12 +190,25 @@ function setActiveProject(employeeID, newActiveProject) {
   }
 }
 
+function getEmployeeInfo(employeeID) {
+  if (!clockedInEmployees[employeeID]) {
+    console.log(`Error: Employee is not clocked in.`);
+    return null;
+  }
 
-function createYearNewTimesheet(employeeInfo) {
-  return new Timesheet({
-    employeeID: employeeInfo.username,
-    name: username,
-    year: query.year,
+  return clockedInEmployees[employeeID];
+}
+
+
+async function createYearTimesheet(employeeID, year) {
+  console.log(`\nCREATE YEAR NEW TIMESHEET FUNCTION`);
+
+  let employeeInfo = getEmployeeInfo(employeeID);
+
+  const newYearTimesheet = new Timesheet({
+    employeeID: employeeID,
+    name: employeeInfo.name,
+    year: employeeInfo.clockedInTime.getFullYear(),
     totalHours: 0,
     lastOnline: new Date().toLocaleString("en-US", {
       timeZone: "America/Phoenix",
@@ -203,23 +217,37 @@ function createYearNewTimesheet(employeeInfo) {
     projects: [],
     activeProject: "",
   });
+  
+  await newYearTimesheet.save();
+  return newYearTimesheet;
 }
 
-function createNewMonthTimesheet(month) {
-  return new MonthTimesheet({
+
+async function createNewMonthTimesheet(month) {
+  console.log(`\nCREATE NEW MONTH TIMESHEET FUNCTION`);
+  
+  const newMonthTimesheet = new MonthTimesheet({
     month: month,
     totalHours: 0,
     days: [],
   });
+
+  return newMonthTimesheet;
 }
 
-function createNewDayTimesheet(day) {
-  return new DayTimesheet({
+
+async function createNewDayTimesheet(day) {
+  console.log(`\nCREATE NEW DAY TIMESHEET FUNCTION`);
+  
+  const newDayTimesheet = new DayTimesheet({
     day: day,
     totalHours: 0,
     sessions: [],
   });
+
+  return newDayTimesheet;
 }
+
 
 function createNewSessionTimesheet(timeIn, timeOut, employeeInfo) {
   console.log(`\nCREATE NEW SESSION TIMESHEET`);
@@ -256,52 +284,60 @@ function createNewSessionTimesheet(timeIn, timeOut, employeeInfo) {
  * ****************/
 
 async function getYearTimesheet(employeeID, year, mustExist = false) {
-  try {
-    let yearTimesheet = await Timesheet.findOne({ employeeID: employeeID, year: year });
-    if (yearTimesheet) return yearTimesheet;
+  console.log(`\nGET YEAR TIMESHEET FUNCTION`);
+
+  let yearTimesheet = await Timesheet.findOne({ employeeID: employeeID, year: year });
+
+  if (yearTimesheet) return yearTimesheet;
+
+  if (mustExist) {
+    let newTimesheet = await createYearTimesheet(employeeID, year);
+    
+    return newTimesheet;
   }
-  catch (error) {
-    if (mustExist) {
-      let yearTimesheet = createYearNewTimesheet(employeeID, year);
-      return yearTimesheet;
-    }
-    else {
-      return null;
-    }
+  else {
+    return null;
   }
 }
+
 
 async function getMonthTimesheet(employeeID, year, monthNumber, mustExist = false) {
-  try {
-    let monthTimesheet = (await getYearTimesheet(employeeID, year)).months.find((m) => m.month === monthNumber);
-    if (monthTimesheet) return monthTimesheet;
+  console.log(`\nGET MONTH TIMESHEET FUNCTION`);
+
+  let yearTimesheet = await getYearTimesheet(employeeID, year, mustExist);
+  if (!yearTimesheet) return null;
+
+  let monthTimesheet = yearTimesheet.months.find((m) => m.month == monthNumber);
+
+  if (monthTimesheet) return monthTimesheet;
+
+  if (mustExist) {
+    let newMonthTimesheet = await createNewMonthTimesheet(monthNumber);
+    return newMonthTimesheet;
   }
-  catch (error) {
-    if (mustExist) {
-      let monthTimesheet = createNewMonthTimesheet(monthNumber);
-      return monthTimesheet;
-    }
-    else {
-      return null;
-    }
+  else {
+    return null;
   }
 }
 
+
 async function getDayTimesheet(employeeID, year, monthNumber, day, mustExist = false) {
-  try {
-    let dayTimesheet = (await getMonthTimesheet(employeeID, year, monthNumber)).days.find((d) => d.day == day);
-    if (dayTimesheet) return dayTimesheet;
+  console.log(`\nGET DAY TIMESHEET FUNCTION`);
+
+  let monthTimesheet = await getMonthTimesheet(employeeID, year, monthNumber, mustExist);
+  let dayTimesheet = monthTimesheet.days.find((d) => d.day == day);
+
+  if (dayTimesheet) return dayTimesheet;
+
+  if (mustExist) {
+    let newDayTimesheet = await createNewDayTimesheet(day);
+    return newDayTimesheet;
   }
-  catch (error) {
-    if (mustExist) {
-      let dayTimesheet = createNewDayTimesheet(day);
-      return dayTimesheet;
-    }
-    else {
-      return null;
-    }
+  else {
+    return null;
   }
 }
+
 
 async function getHours(day, month, year, employeeID) {
   // a possible way of doing is adding up the options (they must be assigned a value) inputed and using a switch case based on that
@@ -326,26 +362,55 @@ async function getHours(day, month, year, employeeID) {
 
 }
 
+
 async function getYearHours(employeeID, year) {
   // console.log(`(getYearHours): Getting year hours for ${year}`)
   return (await getYearTimesheet(employeeID, year)).totalHours;
 }
+
 
 async function getMonthHours(employeeID, year, month) {
   // console.log(`(getMonthHours): Getting hours for ${month}/${year}`)
   return (await getMonthTimesheet(employeeID, year, month)).totalHours;
 }
 
+
 async function getDayHours(employeeID, year, month, day) {
   // console.log(`(getDayHours): Getting hours for ${month}/${day}/${year}`)
   return (await getDayTimesheet(employeeID, year, month, day)).totalHours;
 }
 
-async function saveShiftToDatabase(shiftTimesheet) {
+
+async function saveShiftToDatabase(shiftTimesheet, employeeID) {
+  let employeeInfo = getEmployeeInfo(employeeID);
+  let year = employeeInfo.clockedInTime.getFullYear();
+  let month = employeeInfo.clockedInTime.getMonth();
+  let day = employeeInfo.clockedInTime.getDate();
+
+  month = month + 1;
+
+  console.log(`\nSAVE SHIFT TO DATABASE`);
+  console.log(`Shift Timesheet: ${JSON.stringify(shiftTimesheet)}`);
+  console.log(`ID: ${employeeID}`);
+  console.log(`Year: ${year}`);
+  console.log(`Month: ${month}`);
+  console.log(`Day: ${day}`);
+
+  let yearTimesheet = await getYearTimesheet(employeeID, year, true);
+  let monthTimesheet = yearTimesheet.months.find((m) => m.month == month);
+  let dayTimesheet = monthTimesheet.days.find((d) => d.day == day);
+
+  dayTimesheet.sessions.push(shiftTimesheet);
+  dayTimesheet.totalHours += shiftTimesheet.totalHours;
+  monthTimesheet.totalHours += shiftTimesheet.totalHours;
+  yearTimesheet.totalHours += shiftTimesheet.totalHours;
+
+  await yearTimesheet.save();
 
 
-
+  return;
 }
+
 
 module.exports = {
   employeesInfo: clockedInEmployees,
@@ -356,6 +421,5 @@ module.exports = {
   findYearTimesheet: getYearTimesheet,
   findMonthTimesheet: getMonthTimesheet,
   findDayTimesheet: getDayTimesheet,
-  updateActiveProject,
   getHours
 } 

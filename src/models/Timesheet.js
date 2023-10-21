@@ -4,9 +4,8 @@ const projectSchema = new Schema(
   {
     name: String,
     totalHours: Number,
-  },
-  { _id: false } // Prevent MongoDB from creating a separate collection for this schema
-  );
+  }
+);
 
 const sessionTimesheetSchema = new Schema(
   {
@@ -14,7 +13,7 @@ const sessionTimesheetSchema = new Schema(
     timeOut: String,
     totalHours: Number,
     projectsWorkedOn: [projectSchema],
-  }, { _id: false } // Prevent MongoDB from creating a separate collection for this schema
+  }
 );
 
 const dayTimesheetSchema = new Schema(
@@ -22,8 +21,7 @@ const dayTimesheetSchema = new Schema(
     day: Number,
     totalHours: Number,
     sessions: [sessionTimesheetSchema],
-  },
-  { _id: false } // Prevent MongoDB from creating a separate collection for this schema
+  }
 );
 
 const monthTimesheetSchema = new Schema(
@@ -31,8 +29,7 @@ const monthTimesheetSchema = new Schema(
     month: Number,
     totalHours: Number,
     days: [dayTimesheetSchema],
-  },
-  { _id: false } // Prevent MongoDB from creating a separate collection for this schema
+  }
 );
 
 
@@ -50,8 +47,8 @@ const timesheetSchema = new Schema(
         creationDate: String,
         lastWorkedDate: String,
         totalTime: Number,
-      }      
-    ], 
+      }
+    ],
   }
 );
 

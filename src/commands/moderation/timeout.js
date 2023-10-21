@@ -70,6 +70,7 @@ module.exports = {
 
   name: 'timeout',
   description: 'Timeout a user.',
+  deleted: true,
   options: [
     {
       name: 'target-user',

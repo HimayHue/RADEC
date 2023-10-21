@@ -1,7 +1,7 @@
 module.exports = {
     name: 'test',
     description: 'Test Command',
-    deleted: false,
+    deleted: true,
   
     callback: async (client, interaction) => {
       await interaction.deferReply();

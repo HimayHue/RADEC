@@ -14,11 +14,9 @@ const {
     PermissionFlagsBits,
 } = require('discord.js');
 
-const { Timesheet } = require("../../models/Timesheet");
+let { clockedInEmployees } = require("../../utils/timesheetFunctions");
 
 require("dotenv").config();
-
-
 
 module.exports = {
 
@@ -29,38 +27,22 @@ module.exports = {
      */
 
     name: 'timesheet',
-    description: 'Timesheet Commands',
-    options: [
-        {
-            name: 'project',
-            description: 'Set the active project',
-            type: ApplicationCommandOptionType.String,
-        }
-    ],
+    description: 'View your timesheet',
     deleted: false,
 
     // Check for options an
     callback: async (client, interaction) => {
         await interaction.deferReply();
 
-        const activeProject = interaction.options.getString('project');
+        let employeeID = interaction.user.id;
+        let employeeName = interaction.user.username;
+        let timesheetInfo = clockedInEmployees[employeeID];
 
-        const usernameId = interaction.user.id;
-        const username = interaction.user.username;
-
-        if (activeProject) {
-            interaction.editReply(
-                `<@${usernameId}> has set their active project to **${activeProject}**`
-            );
-        };
-
-
-
+        if (timesheetInfo) {
+            return interaction.editReply(`You are currently clocked in to ${JSON.stringify(timesheetInfo.activeProject)}.`);
+        } 
+        else {
+            return interaction.editReply(`You are currently not clocked in.`);
+        }
     }
-}
-
-
-async function findYearTimesheet() {
-    let yearTimesheet = await Timesheet.findOne({ employeeID: usernameId, year: yearOption });
-    return yearTimesheet;
 }

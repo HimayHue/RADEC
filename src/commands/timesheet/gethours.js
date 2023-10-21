@@ -127,8 +127,9 @@ module.exports = {
     if (day && !(0 < day && day <= daysInMonth[monthName])) {
       return interaction.editReply(`Invalid day. Please enter a day between 1 and ${daysInMonth[monthOption]}.`);
     }
-
+    
     try {
+      console.log(`day: ${day}`);
       let hours = await getHours(day, monthNumber, year, interaction.user.id);
 
       if (hours) {
