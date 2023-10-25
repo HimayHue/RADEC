@@ -9,7 +9,6 @@ Important Notes:
 
 const { Client, Interaction, ApplicationCommandOptionType, MessageActionRow, MessageButtonComponent } = require('discord.js');
 const { clockIn } = require('../../utils/timesheetFunctions');
-let { employeesInfo } = require('../../utils/timesheetFunctions');
 require('dotenv').config();
 
 module.exports = {

@@ -19,10 +19,7 @@ const {
   PermissionFlagsBits,
 } = require('discord.js');
 
-const { Timesheet } = require("../../models/Timesheet");
 const { findYearTimesheet, getHours } = require('../../utils/timesheetFunctions');
-
-require("dotenv").config();
 
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -96,8 +93,10 @@ module.exports = {
 
     await interaction.deferReply();
 
-    if (interaction.user.username != 'himay') {
-      return interaction.editReply('You do not have permission to use this command.');
+    // only allow users with Radec role to clock in
+    const role = interaction.guild.roles.cache.find(role => role.name === "Radec");
+    if (!interaction.member.roles.cache.has(role.id)) {
+        return interaction.editReply(`You do not have permission to clock in.`);
     }
 
     const dayOption = interaction.options.getString('day');

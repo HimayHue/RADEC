@@ -4,107 +4,67 @@ const { Timesheet, MonthTimesheet, DayTimesheet, SessionTimesheet } = require(".
 
 let clockedInEmployees = {};
 
-/* Example of employeesInfo
-{
-  himay: {
-    employeeID: 1234567890,
-    clockedInTime: 2021-09-04T22:00:00.000Z
-    clockedOutTime: 2021-09-04T23:00:00.000Z
-    projectStarted: 2021-09-04T22:00:00.000Z
-    activeProject: "project1",
-    projectsWorkedOn: [
-      {
-        name: "project1",
-        hoursWorked: 1,
-      },
-      {
-        name: "project2",
-        hoursWorked: 2,
-      },
-    ]
-  }
-}
-*/
-
-/* ****************
- * 
- * TIMESHEET FUNCTIONS
- * 
- * These functions are used to manipulate the timesheet
- * 
- * ***************/
-
-// Make clockIn and clockOut check if the employee is already clocked in or out
-function clockIn(employeeID, employeeName, clockedInTime, project = null) {
+// Discord Functions. All of these return strings that can be sent as messages to the user.
+function clockIn(employeeID, employeeName, timeIn, project = null) {
   console.log(`\nCLOCK IN FUNCTION`);
-  const employeeInfo = clockedInEmployees[employeeID];
+  const employeeInfo = getClockedInEmployeeInfo(employeeID);
 
   if (!employeeInfo) {
     clockedInEmployees[employeeID] = {};
+    clockedInEmployees[employeeID].employeeID = employeeID;
     clockedInEmployees[employeeID].name = employeeName;
-    clockedInEmployees[employeeID].clockedInTime = clockedInTime;
+    clockedInEmployees[employeeID].timeIn = timeIn;
     clockedInEmployees[employeeID].projectsWorkedOn = new Map();
 
     // If a project is specified, add it to the employee's projectsWorkedOn map
     if (project) {
-      clockedInEmployees[employeeID].projectStarted = clockedInTime;
+      clockedInEmployees[employeeID].projectStartTime = timeIn;
       clockedInEmployees[employeeID].activeProject = project;
       clockedInEmployees[employeeID].projectsWorkedOn.set(project, 0);
 
       clockedInEmployees[employeeID].projectsWorkedOn.forEach((value, key) => {
         console.log(`Key: ${key}, Value: ${value}`);
       });
-      return `You have clocked in at ${clockedInTime.toLocaleString()} and are working on ${project}`;
+      return `You have clocked in at ${timeIn.toLocaleString()} and are working on ${project}`;
     }
 
 
-    return `You have clocked in at ${clockedInTime.toLocaleString()}`;
+    return `You have clocked in at ${timeIn.toLocaleString()}`;
   }
   else {
     console.log(`Error: Employee is already clocked in.`);
-    return `You are already clocked in at ${employeeInfo.clockedInTime.toLocaleString()}`;
+    return `You are already clocked in at ${employeeInfo.timeIn.toLocaleString()}`;
   }
 
 }
 
 
-async function clockOut(employeeID, clockedOutTime) {
+async function clockOut(employeeID, timeOut) {
   console.log(`\nCLOCK OUT`);
-  // Check if the employee is clocked in
-  const employeeInfo = clockedInEmployees[employeeID];
+
+  const employeeInfo = getClockedInEmployeeInfo(employeeID);
   if (!employeeInfo) return `You are not clocked in.`;
 
-  // Calculate the hours worked
-  const hoursWorked = calculateHoursWorked(employeeInfo.clockedInTime, clockedOutTime);
+  employeeInfo.timeOut = timeOut;
+
+  const hoursWorked = calculateHoursWorked(employeeInfo.timeIn, timeOut);
 
   // Update the projectsWorkedOn map
   setActiveProject(employeeID, null);
 
-  // print out employeeInfo
-  console.log(`Employee Info: ${JSON.stringify(employeeInfo)}`);
+  const sessionTimesheet = createNewSessionTimesheet(employeeInfo);
 
-  // print out the projectsWorkedOn map
-  employeeInfo.projectsWorkedOn.forEach((value, key) => {
-    console.log(`Key: ${key}, Value: ${value}`);
-  });
-
-  // Create a new session timesheet
-  const sessionTimesheet = createNewSessionTimesheet(employeeInfo.clockedInTime, clockedOutTime, employeeInfo);
-  console.log(`Session Timesheet: ${JSON.stringify(sessionTimesheet)}`);
-  console.log(`Session Timesheet projects: ${JSON.stringify(sessionTimesheet.projectsWorkedOn)}`);
-
-  await saveShiftToDatabase(sessionTimesheet, employeeID);
+  await updateTimesheet(sessionTimesheet, employeeID);
 
   delete clockedInEmployees[employeeID];
-  console.log(`Deleted employee from clockedInEmployees: ${JSON.stringify(clockedInEmployees)}`);
 
-  return `You have clocked out at ${clockedOutTime.toLocaleString()}. You worked ${hoursWorked} hours.`
+  return `You have clocked out at ${timeOut.toLocaleString()}. You worked ${hoursWorked} hours.`
 
 }
 
 
-function calculateHoursWorked(clockIn, clockOut) {
-  const millisecondsWorked = clockOut - clockIn;
+function calculateHoursWorked(timeIn, timeOut) {
+  const millisecondsWorked = timeOut - timeIn;
   const hoursWorked = millisecondsWorked / (1000 * 60 * 60);
   return parseFloat(hoursWorked.toFixed(3));
 }
@@ -112,31 +72,26 @@ function calculateHoursWorked(clockIn, clockOut) {
 
 function setActiveProject(employeeID, newActiveProject) {
   console.log(`\nSET ACTIVE PROJECT FUNCTION`);
-  let employeeInfo = clockedInEmployees[employeeID];
+  let employeeInfo = getClockedInEmployeeInfo(employeeID);
 
-  // check if employee is clocked in
   if (!employeeInfo) return `You are not clocked in.`;
 
-
-
-  // check if employee is already working on the project
   if (employeeInfo.activeProject == newActiveProject) return `You are already working on ${newActiveProject}.`;
 
-  // check if employee has an active project
   if (employeeInfo.activeProject) {
 
     let previousActiveProject = employeeInfo.activeProject;
 
     // Add the hours worked on the previous project to the projectsWorkedOn map
-    const hoursWorked = calculateHoursWorked(employeeInfo.projectStarted, new Date());
-    const currentHoursWorked = employeeInfo.projectsWorkedOn.get(employeeInfo.activeProject);
+    const hoursWorked = calculateHoursWorked(employeeInfo.projectStartTime, new Date());
+    const currentHoursWorked = employeeInfo.projectsWorkedOn.get(previousActiveProject);
     const totalHoursWorked = currentHoursWorked + hoursWorked;
-    employeeInfo.projectsWorkedOn.set(employeeInfo.activeProject, totalHoursWorked);
+    employeeInfo.projectsWorkedOn.set(previousActiveProject, totalHoursWorked);
 
     // check if newActiveProject is null
     if (!newActiveProject || newActiveProject == "null" || newActiveProject == "none") {
       employeeInfo.activeProject = null;
-      employeeInfo.projectStarted = null;
+      employeeInfo.projectStartTime = null;
 
       // print out the projectsWorkedOn map
       employeeInfo.projectsWorkedOn.forEach((value, key) => {
@@ -152,7 +107,7 @@ function setActiveProject(employeeID, newActiveProject) {
     }
 
     employeeInfo.activeProject = newActiveProject;
-    employeeInfo.projectStarted = new Date();
+    employeeInfo.projectStartTime = new Date();
 
     // print out the projectsWorkedOn map
     employeeInfo.projectsWorkedOn.forEach((value, key) => {
@@ -166,7 +121,7 @@ function setActiveProject(employeeID, newActiveProject) {
     // This if statement should run when you clock out without having an active project
     if (!newActiveProject || newActiveProject == "null" || newActiveProject == "none") {
       employeeInfo.activeProject = null;
-      employeeInfo.projectStarted = null;
+      employeeInfo.projectStartTime = null;
       // print out the projectsWorkedOn map
       employeeInfo.projectsWorkedOn.forEach((value, key) => {
         console.log(`Key: ${key}, Value: ${value}`);
@@ -180,7 +135,7 @@ function setActiveProject(employeeID, newActiveProject) {
     }
 
     employeeInfo.activeProject = newActiveProject;
-    employeeInfo.projectStarted = new Date();
+    employeeInfo.projectStartTime = new Date();
 
     // print out the projectsWorkedOn map
     employeeInfo.projectsWorkedOn.forEach((value, key) => {
@@ -190,9 +145,12 @@ function setActiveProject(employeeID, newActiveProject) {
   }
 }
 
-function getEmployeeInfo(employeeID) {
+
+function getClockedInEmployeeInfo(employeeID) {
+  console.log(`\nGET CLOCKED IN EMPLOYEE INFO FUNCTION`);
+
   if (!clockedInEmployees[employeeID]) {
-    console.log(`Error: Employee is not clocked in.`);
+    console.log(`Employee is not clocked in.`);
     return null;
   }
 
@@ -200,16 +158,16 @@ function getEmployeeInfo(employeeID) {
 }
 
 
-async function createYearTimesheet(employeeID, year) {
+// Timesheet Functions
+function createYearTimesheet(employeeInfo, year) {
   console.log(`\nCREATE YEAR NEW TIMESHEET FUNCTION`);
-
-  let employeeInfo = getEmployeeInfo(employeeID);
+  console.log(`Employee Info: ${JSON.stringify(employeeInfo)}`);
 
   const newYearTimesheet = new Timesheet({
-    employeeID: employeeID,
+    employeeID: employeeInfo.employeeID,
     name: employeeInfo.name,
-    year: employeeInfo.clockedInTime.getFullYear(),
-    totalHours: 0,
+    year: employeeInfo.timeIn.getFullYear(),
+    totalHours: parseFloat(0),
     lastOnline: new Date().toLocaleString("en-US", {
       timeZone: "America/Phoenix",
     }),
@@ -217,15 +175,15 @@ async function createYearTimesheet(employeeID, year) {
     projects: [],
     activeProject: "",
   });
-  
-  await newYearTimesheet.save();
+
+
   return newYearTimesheet;
 }
 
 
-async function createNewMonthTimesheet(month) {
+ function createNewMonthTimesheet(month) {
   console.log(`\nCREATE NEW MONTH TIMESHEET FUNCTION`);
-  
+
   const newMonthTimesheet = new MonthTimesheet({
     month: month,
     totalHours: 0,
@@ -236,9 +194,9 @@ async function createNewMonthTimesheet(month) {
 }
 
 
-async function createNewDayTimesheet(day) {
+ function createNewDayTimesheet(day) {
   console.log(`\nCREATE NEW DAY TIMESHEET FUNCTION`);
-  
+
   const newDayTimesheet = new DayTimesheet({
     day: day,
     totalHours: 0,
@@ -249,12 +207,10 @@ async function createNewDayTimesheet(day) {
 }
 
 
-function createNewSessionTimesheet(timeIn, timeOut, employeeInfo) {
+function createNewSessionTimesheet(employeeInfo) {
   console.log(`\nCREATE NEW SESSION TIMESHEET`);
-  const millisecondsPerHour = 3600000; // Number of milliseconds in an hour
 
-  const totalMilliseconds = timeOut.getTime() - timeIn.getTime();
-  const totalHours = parseFloat((totalMilliseconds / millisecondsPerHour).toFixed(3));
+  const totalHours = calculateHoursWorked(employeeInfo.timeIn, employeeInfo.timeOut);
 
   let projectArray;
 
@@ -267,74 +223,91 @@ function createNewSessionTimesheet(timeIn, timeOut, employeeInfo) {
   console.log(`projects: ${JSON.stringify(projectArray)}`);
 
   return new SessionTimesheet({
-    timeIn: timeIn.toLocaleString(),
-    timeOut: timeOut.toLocaleString(),
-    totalHours: parseFloat(totalHours),
+    timeIn: employeeInfo.timeIn.toLocaleString(),
+    timeOut: employeeInfo.timeOut.toLocaleString(),
+    totalHours: totalHours,
     projectsWorkedOn: projectArray, // Now projects is accessible here
   });
 
 }
 
-/* ****************
- * 
- * DATABASE FUNCTIONS
- *
- * All of these functions communicate with the database
- * 
- * ****************/
 
-async function getYearTimesheet(employeeID, year, mustExist = false) {
+// Database Functions
+async function getYearTimesheet(employeeID, year) {
   console.log(`\nGET YEAR TIMESHEET FUNCTION`);
 
-  let yearTimesheet = await Timesheet.findOne({ employeeID: employeeID, year: year });
-
-  if (yearTimesheet) return yearTimesheet;
-
-  if (mustExist) {
-    let newTimesheet = await createYearTimesheet(employeeID, year);
-    
-    return newTimesheet;
+  let query = {
+    employeeID: employeeID,
+    year: year,
   }
-  else {
-    return null;
-  }
+
+  let yearTimesheet = await Timesheet.findOne(query);
+
+  if (!yearTimesheet) return null;
+  else return yearTimesheet;
 }
 
 
-async function getMonthTimesheet(employeeID, year, monthNumber, mustExist = false) {
+async function getMonthTimesheet(employeeID, year, monthNumber) {
   console.log(`\nGET MONTH TIMESHEET FUNCTION`);
 
-  let yearTimesheet = await getYearTimesheet(employeeID, year, mustExist);
-  if (!yearTimesheet) return null;
-
-  let monthTimesheet = yearTimesheet.months.find((m) => m.month == monthNumber);
-
-  if (monthTimesheet) return monthTimesheet;
-
-  if (mustExist) {
-    let newMonthTimesheet = await createNewMonthTimesheet(monthNumber);
-    return newMonthTimesheet;
-  }
-  else {
+  let invalidMonthNumber = (monthNumber < 1 || monthNumber > 12);
+  if (invalidMonthNumber) {
+    console.log(`Error: Invalid month number.`);
     return null;
   }
+
+  let query = {
+    employeeID: employeeID,
+    year: year,
+    "months.month": monthNumber,
+  }
+
+  let monthTimesheet = await Timesheet.findOne(query);
+
+  if (!monthTimesheet) {
+    return null;
+  }
+  else {
+    monthTimesheet = monthTimesheet.months.find((m) => m.month === monthNumber);
+    return monthTimesheet;
+  }
+
+
+
 }
 
 
-async function getDayTimesheet(employeeID, year, monthNumber, day, mustExist = false) {
+async function getDayTimesheet(employeeID, year, monthNumber, day) {
   console.log(`\nGET DAY TIMESHEET FUNCTION`);
 
-  let monthTimesheet = await getMonthTimesheet(employeeID, year, monthNumber, mustExist);
-  let dayTimesheet = monthTimesheet.days.find((d) => d.day == day);
+  let invalidMonthNumber = (monthNumber < 1 || monthNumber > 12);
+  let invalidDay = (day < 1 || day > new Date(year, monthNumber, 0).getDate());
 
-  if (dayTimesheet) return dayTimesheet;
+  if (invalidMonthNumber) {
+    console.log(`Error: Invalid month number.`);
+    return null;
+  }
+  if (invalidDay) {
+    console.log(`Error: Invalid day.`);
+    return null;
+  }
 
-  if (mustExist) {
-    let newDayTimesheet = await createNewDayTimesheet(day);
-    return newDayTimesheet;
+  let query = {
+    employeeID: employeeID,
+    year: year,
+    "months.month": monthNumber,
+    "months.days.day": day,
+  }
+
+  let dayTimesheet = await Timesheet.findOne(query);
+
+  if (!dayTimesheet) {
+    return null;
   }
   else {
-    return null;
+    dayTimesheet = dayTimesheet.months.find((m) => m.month === monthNumber).days.find((d) => d.day === day);
+    return dayTimesheet;
   }
 }
 
@@ -381,45 +354,107 @@ async function getDayHours(employeeID, year, month, day) {
 }
 
 
-async function saveShiftToDatabase(shiftTimesheet, employeeID) {
-  let employeeInfo = getEmployeeInfo(employeeID);
-  let year = employeeInfo.clockedInTime.getFullYear();
-  let month = employeeInfo.clockedInTime.getMonth();
-  let day = employeeInfo.clockedInTime.getDate();
+async function updateTimesheet(shiftTimesheet, employeeID) {
+  console.log(`\nSAVE SHIFT TO DATABASE FUNCTION`);
 
-  month = month + 1;
+  let employeeInfo = getClockedInEmployeeInfo(employeeID);
+  let year = employeeInfo.timeIn.getFullYear();
+  let month = employeeInfo.timeIn.getMonth() + 1;
+  let day = employeeInfo.timeIn.getDate();
 
-  console.log(`\nSAVE SHIFT TO DATABASE`);
-  console.log(`Shift Timesheet: ${JSON.stringify(shiftTimesheet)}`);
-  console.log(`ID: ${employeeID}`);
-  console.log(`Year: ${year}`);
-  console.log(`Month: ${month}`);
-  console.log(`Day: ${day}`);
+  let yearTimesheet = await getYearTimesheet(employeeID, year);
+  if (!yearTimesheet) {
+    yearTimesheet = await createYearTimesheet(employeeInfo, year);
+  }
+  yearTimesheet.hoursWorked += shiftTimesheet.totalHours;
 
-  let yearTimesheet = await getYearTimesheet(employeeID, year, true);
-  let monthTimesheet = yearTimesheet.months.find((m) => m.month == month);
-  let dayTimesheet = monthTimesheet.days.find((d) => d.day == day);
+  console.log(`Year timesheet: ${JSON.stringify(yearTimesheet)}`);
+
+  let monthTimesheet = yearTimesheet.months.find((m) => m.month === month);
+  if (!monthTimesheet) {
+    monthTimesheet = await createNewMonthTimesheet(month);
+  }
+  monthTimesheet.hoursWorked += shiftTimesheet.totalHours;
+
+  let dayTimesheet = monthTimesheet.days.find((d) => d.day === day);
+  if (!dayTimesheet) {
+    dayTimesheet = await createNewDayTimesheet(day);
+  }
+  dayTimesheet.hoursWorked += shiftTimesheet.totalHours;
+
+
+  // print type of yearTimesheet.hoursWorked
+  console.log(`Type of yearTimesheet.hoursWorked: ${typeof yearTimesheet.hoursWorked}`);
+
+  // print type of sessionTimesheet.totalHours
+  console.log(`Type of shiftTimesheet.totalHours: ${typeof shiftTimesheet.totalHours}`);
+
+  console.log(`Total hours worked: ${yearTimesheet.hoursWorked}`)
 
   dayTimesheet.sessions.push(shiftTimesheet);
-  dayTimesheet.totalHours += shiftTimesheet.totalHours;
-  monthTimesheet.totalHours += shiftTimesheet.totalHours;
-  yearTimesheet.totalHours += shiftTimesheet.totalHours;
+  monthTimesheet.days.push(dayTimesheet);
+  yearTimesheet.months.push(monthTimesheet);
+
+  // console.log(`Adding shift to day timesheet: ${JSON.stringify(shiftTimesheet)}`);
+  // console.log(`Day timesheet shifts: ${JSON.stringify(dayTimesheet)}`);
+
 
   await yearTimesheet.save();
+  console.log(`Saved shift to database`);
+}
 
 
+async function test() {
+  console.log(`\nTEST FUNCTION`);
+
+  let year = 2023;
+  let month = 10; // The specific month you want to search in
+  let day = 22;   // The specific day you want to search for
+  let employeeID = 123;
+  let employeeName = "Test";
+
+  clockIn(employeeID, employeeName, new Date(), "Project 1");
+  let employeeInfo = getClockedInEmployeeInfo(employeeID);
+
+
+
+  // let timesheet = await getDayTimesheet(employeeID, year, month, day);
+
+  let timesheet = await getYearTimesheet(employeeID, year);
+  console.log(`Did ${timesheet ? "not " : ""}find timesheet`)
+
+  console.log(`timesheet ${timesheet ? "found" : "not found"}`);
+  if (!timesheet) {
+
+    timesheet = createYearTimesheet(employeeInfo, year);
+    console.log(`Created new year timesheet: ${JSON.stringify(timesheet)}`);
+
+    timesheet.totalHours += 1;
+
+    timesheet.save();
+    return;
+  }
+
+  console.log(`Year Timesheet: ${JSON.stringify(timesheet)}`);
+
+  timesheet.totalHo urs += 1;
+  timesheet.save();
   return;
 }
 
 
 module.exports = {
-  employeesInfo: clockedInEmployees,
   clockIn,
   clockOut,
-  calculateHoursWorked,
   setActiveProject,
-  findYearTimesheet: getYearTimesheet,
-  findMonthTimesheet: getMonthTimesheet,
-  findDayTimesheet: getDayTimesheet,
-  getHours
+  getClockedInEmployeeInfo,
+  getYearTimesheet,
+  getMonthTimesheet,
+  getDayTimesheet,
+  getHours,
+  getYearHours,
+  getMonthHours,
+  getDayHours,
+  updateTimesheet,
+  test,
 } 
