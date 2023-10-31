@@ -93,7 +93,7 @@ module.exports = {
 
     await interaction.deferReply();
 
-    // only allow users with Radec role to clock in
+    // only allow users with Radec role to get hours
     const role = interaction.guild.roles.cache.find(role => role.name === "Radec");
     if (!interaction.member.roles.cache.has(role.id)) {
         return interaction.editReply(`You do not have permission to clock in.`);

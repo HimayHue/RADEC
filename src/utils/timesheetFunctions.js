@@ -181,7 +181,7 @@ function createYearTimesheet(employeeInfo, year) {
 }
 
 
- function createNewMonthTimesheet(month) {
+function createNewMonthTimesheet(month) {
   console.log(`\nCREATE NEW MONTH TIMESHEET FUNCTION`);
 
   const newMonthTimesheet = new MonthTimesheet({
@@ -194,7 +194,7 @@ function createYearTimesheet(employeeInfo, year) {
 }
 
 
- function createNewDayTimesheet(day) {
+function createNewDayTimesheet(day) {
   console.log(`\nCREATE NEW DAY TIMESHEET FUNCTION`);
 
   const newDayTimesheet = new DayTimesheet({
@@ -363,41 +363,79 @@ async function updateTimesheet(shiftTimesheet, employeeID) {
   let day = employeeInfo.timeIn.getDate();
 
   let yearTimesheet = await getYearTimesheet(employeeID, year);
+  let monthTimesheet = yearTimesheet?.months.find((m) => m.month === month);
+  let dayTimesheet = monthTimesheet?.days.find((d) => d.day === day);
+
   if (!yearTimesheet) {
+
     yearTimesheet = createYearTimesheet(employeeInfo, year);
-  }
-  yearTimesheet.totalHours += shiftTimesheet.totalHours;
-
-  console.log(`Year timesheet: ${JSON.stringify(yearTimesheet)}`);
-
-  let monthTimesheet = yearTimesheet.months.find((m) => m.month === month);
-  if (!monthTimesheet) {
     monthTimesheet = createNewMonthTimesheet(month);
-  }
-  monthTimesheet.totalHours += shiftTimesheet.totalHours;
-
-  let dayTimesheet = monthTimesheet.days.find((d) => d.day === day);
-  if (!dayTimesheet) {
     dayTimesheet = createNewDayTimesheet(day);
+    
+    yearTimesheet.totalHours += shiftTimesheet.totalHours;
+    monthTimesheet.totalHours += shiftTimesheet.totalHours;
+    dayTimesheet.totalHours += shiftTimesheet.totalHours;
+
+    dayTimesheet.sessions.push(shiftTimesheet);
+    monthTimesheet.days.push(dayTimesheet);
+    yearTimesheet.months.push(monthTimesheet);
+
   }
-  dayTimesheet.totalHours += shiftTimesheet.totalHours;
+  else {
 
+    yearTimesheet.totalHours += shiftTimesheet.totalHours;
 
-  // print type of yearTimesheet.hoursWorked
-  console.log(`Type of yearTimesheet.totalHours: ${typeof yearTimesheet.totalHours}`);
+    if (!monthTimesheet) {
 
-  // print type of sessionTimesheet.totalHours
-  console.log(`Type of shiftTimesheet.totalHours: ${typeof shiftTimesheet.totalHours}`);
+      monthTimesheet = createNewMonthTimesheet(month);
+      dayTimesheet = createNewDayTimesheet(day);
 
-  console.log(`Total hours worked: ${yearTimesheet.totalHours}`)
+      dayTimesheet.totalHours += shiftTimesheet.totalHours;
+      monthTimesheet.totalHours += shiftTimesheet.totalHours;
 
-  dayTimesheet.sessions.push(shiftTimesheet);
-  monthTimesheet.days.push(dayTimesheet);
-  yearTimesheet.months.push(monthTimesheet);
+      dayTimesheet.sessions.push(shiftTimesheet);
+      monthTimesheet.days.push(dayTimesheet);
+      yearTimesheet.months.push(monthTimesheet);
 
-  // console.log(`Adding shift to day timesheet: ${JSON.stringify(shiftTimesheet)}`);
-  // console.log(`Day timesheet shifts: ${JSON.stringify(dayTimesheet)}`);
+    }
+    else {
+      monthTimesheet.totalHours += shiftTimesheet.totalHours;
 
+      if (!dayTimesheet) {
+        dayTimesheet.totalHours += shiftTimesheet.totalHours;
+
+        dayTimesheet = createNewDayTimesheet(day);
+        monthTimesheet.days.push(dayTimesheet);
+        dayTimesheet.sessions.push(shiftTimesheet);
+      }
+      else {
+        dayTimesheet.totalHours += shiftTimesheet.totalHours;
+        dayTimesheet.sessions.push(shiftTimesheet);
+      }
+
+    }
+
+  }
+  // Update Projects
+  let projectsWorkedOn = shiftTimesheet.projectsWorkedOn;
+  projectsWorkedOn.forEach((project) => {
+    let projectIndex = yearTimesheet.projects.findIndex((p) => p.name.toLowerCase() === project.name.toLowerCase());
+    if (projectIndex === -1) {
+      yearTimesheet.projects.push({
+        name: project.name,
+        creationDate: new Date().toLocaleString(),
+        lastWorkedDate: new Date().toLocaleString(),
+        totalTime: project.totalHours,
+      });
+    }
+    else {
+      yearTimesheet.projects[projectIndex].totalTime += project.totalHours;
+      yearTimesheet.projects[projectIndex].lastWorkedDate = new Date().toLocaleString();
+    }
+
+  });
+
+  yearTimesheet.lastOnline = new Date().toLocaleString();
 
   await yearTimesheet.save();
   console.log(`Saved shift to database`);

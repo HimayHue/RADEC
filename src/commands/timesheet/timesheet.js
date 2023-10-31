@@ -14,7 +14,7 @@ const {
     PermissionFlagsBits,
 } = require('discord.js');
 
-let { clockedInEmployees } = require("../../utils/timesheetFunctions");
+let { getClockedInEmployeeInfo } = require("../../utils/timesheetFunctions");
 
 require("dotenv").config();
 
@@ -36,10 +36,10 @@ module.exports = {
 
         let employeeID = interaction.user.id;
         let employeeName = interaction.user.username;
-        let timesheetInfo = clockedInEmployees[employeeID];
+        let timesheetInfo = getClockedInEmployeeInfo(employeeID);
 
         if (timesheetInfo) {
-            return interaction.editReply(`You are currently clocked in to ${JSON.stringify(timesheetInfo.activeProject)}.`);
+            return interaction.editReply(`Your current shift timesheet: ${JSON.stringify(timesheetInfo)}.`);
         } 
         else {
             return interaction.editReply(`You are currently not clocked in.`);

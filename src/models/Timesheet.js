@@ -32,19 +32,6 @@ const monthTimesheetSchema = new Schema(
   }
 );
 
-const yearTimesheetSchema = new Schema(
-  {
-    employeeID: String,
-    employeeName: String,
-    year: Number,
-    totalHours: Number,
-    lastOnline: String,
-    months: [],
-    projects: [],
-  }
-);
-
-
 const timesheetSchema = new Schema(
   {
     employeeID: String,
@@ -68,7 +55,6 @@ const Timesheet = model("Timesheet", timesheetSchema);
 const SessionTimesheet = model("SessionTimesheet", sessionTimesheetSchema);
 const DayTimesheet = model("DayTimesheet", dayTimesheetSchema);
 const MonthTimesheet = model("MonthTimesheet", monthTimesheetSchema);
-const YearTimesheet = model("YearTimesheet", yearTimesheetSchema);
 const Project = model("Project", projectSchema);
 
 module.exports = {
@@ -76,6 +62,5 @@ module.exports = {
   SessionTimesheet,
   DayTimesheet,
   MonthTimesheet,
-  YearTimesheet,
   Project,
 };
