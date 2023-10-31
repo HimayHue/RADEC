@@ -1,38 +1,55 @@
 const { Schema, model } = require("mongoose");
 
-const sessionTimesheetSchema = new Schema({
-  timeIn: String,
-  timeOut: String,
-  totalHours: Number,
-});
+const projectSchema = new Schema(
+  {
+    name: String,
+    totalHours: Number,
+  }
+);
 
-const dayTimesheetSchema = new Schema({
-  day: Number,
-  totalHours: Number,
-  sessions: [sessionTimesheetSchema],
-});
+const sessionTimesheetSchema = new Schema(
+  {
+    timeIn: String,
+    timeOut: String,
+    totalHours: Number,
+    projectsWorkedOn: [projectSchema],
+  }
+);
 
-const monthTimesheetSchema = new Schema({
-  month: Number,
-  totalHours: Number,
-  days: [dayTimesheetSchema],
-});
+const dayTimesheetSchema = new Schema(
+  {
+    day: Number,
+    totalHours: Number,
+    sessions: [sessionTimesheetSchema],
+  }
+);
 
-const projectSchema = new Schema({
-  name: String,
-  value: Number,
-});
+const monthTimesheetSchema = new Schema(
+  {
+    month: Number,
+    totalHours: Number,
+    days: [dayTimesheetSchema],
+  }
+);
 
-const timesheetSchema = new Schema({
-  employeeID: String,
-  name: String,
-  year: Number,
-  totalHours: Number,
-  lastOnline: String,
-  months: [monthTimesheetSchema],
-  projects: [projectSchema],
-  activeProject: String,
-});
+const timesheetSchema = new Schema(
+  {
+    employeeID: String,
+    name: String,
+    year: Number,
+    totalHours: Number,
+    lastOnline: String,
+    months: [monthTimesheetSchema],
+    projects: [
+      {
+        name: String,
+        creationDate: String,
+        lastWorkedDate: String,
+        totalTime: Number,
+      }
+    ],
+  }
+);
 
 const Timesheet = model("Timesheet", timesheetSchema);
 const SessionTimesheet = model("SessionTimesheet", sessionTimesheetSchema);
