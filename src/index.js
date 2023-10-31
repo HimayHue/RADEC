@@ -28,7 +28,7 @@ let timeOut;
 (async () => {
   try {
     mongoose.set("strictQuery", false);
-    await mongoose.connect(process.env.MONGODB_URI, { keepAlive: true });
+    await mongoose.connect("mongodb+srv://himayradec:UDRll2qTTTEieEtP@radec.xwhrkef.mongodb.net/RADEC", { keepAlive: true });
     console.log("Connected to Mongo Database.");
 
     eventHandler(client);
