@@ -26,7 +26,7 @@ module.exports = {
 
         const employeeID = interaction.user.id;
 
-        let clockOutInfo = clockOut(employeeID, new Date());
+        let clockOutInfo = await clockOut(employeeID, new Date());
 
         return interaction.editReply(`${clockOutInfo}`);
         

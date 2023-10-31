@@ -364,32 +364,32 @@ async function updateTimesheet(shiftTimesheet, employeeID) {
 
   let yearTimesheet = await getYearTimesheet(employeeID, year);
   if (!yearTimesheet) {
-    yearTimesheet = await createYearTimesheet(employeeInfo, year);
+    yearTimesheet = createYearTimesheet(employeeInfo, year);
   }
-  yearTimesheet.hoursWorked += shiftTimesheet.totalHours;
+  yearTimesheet.totalHours += shiftTimesheet.totalHours;
 
   console.log(`Year timesheet: ${JSON.stringify(yearTimesheet)}`);
 
   let monthTimesheet = yearTimesheet.months.find((m) => m.month === month);
   if (!monthTimesheet) {
-    monthTimesheet = await createNewMonthTimesheet(month);
+    monthTimesheet = createNewMonthTimesheet(month);
   }
-  monthTimesheet.hoursWorked += shiftTimesheet.totalHours;
+  monthTimesheet.totalHours += shiftTimesheet.totalHours;
 
   let dayTimesheet = monthTimesheet.days.find((d) => d.day === day);
   if (!dayTimesheet) {
-    dayTimesheet = await createNewDayTimesheet(day);
+    dayTimesheet = createNewDayTimesheet(day);
   }
-  dayTimesheet.hoursWorked += shiftTimesheet.totalHours;
+  dayTimesheet.totalHours += shiftTimesheet.totalHours;
 
 
   // print type of yearTimesheet.hoursWorked
-  console.log(`Type of yearTimesheet.hoursWorked: ${typeof yearTimesheet.hoursWorked}`);
+  console.log(`Type of yearTimesheet.totalHours: ${typeof yearTimesheet.totalHours}`);
 
   // print type of sessionTimesheet.totalHours
   console.log(`Type of shiftTimesheet.totalHours: ${typeof shiftTimesheet.totalHours}`);
 
-  console.log(`Total hours worked: ${yearTimesheet.hoursWorked}`)
+  console.log(`Total hours worked: ${yearTimesheet.totalHours}`)
 
   dayTimesheet.sessions.push(shiftTimesheet);
   monthTimesheet.days.push(dayTimesheet);
@@ -437,7 +437,7 @@ async function test() {
 
   console.log(`Year Timesheet: ${JSON.stringify(timesheet)}`);
 
-  timesheet.totalHo urs += 1;
+  timesheet.totalHours += 1;
   timesheet.save();
   return;
 }
