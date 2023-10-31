@@ -33,7 +33,7 @@ let timeOut;
 
     eventHandler(client);
 
-    client.login(process.env.TOKEN);
+    client.login("Njk1Nzk2ODEwMDk4Mjc4NDEw.G-psOC.XK5xOTSLrRzqU-OdUZSA6JVR6N_7Dn9hPREJMU");
   } catch (error) {
     console.log(`Error: ${error}`);
   }
