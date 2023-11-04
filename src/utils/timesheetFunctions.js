@@ -366,6 +366,9 @@ async function updateTimesheet(shiftTimesheet, employeeID) {
   let monthTimesheet = yearTimesheet?.months.find((m) => m.month === month);
   let dayTimesheet = monthTimesheet?.days.find((d) => d.day === day);
 
+  console.log(`shift timesheet total hours: ${shiftTimesheet?.totalHours}`);
+  console.log(`year timesheet total hours: ${yearTimesheet?.totalHours}`);
+
   if (!yearTimesheet) {
 
     yearTimesheet = createYearTimesheet(employeeInfo, year);
@@ -402,9 +405,8 @@ async function updateTimesheet(shiftTimesheet, employeeID) {
       monthTimesheet.totalHours += shiftTimesheet.totalHours;
 
       if (!dayTimesheet) {
-        dayTimesheet.totalHours += shiftTimesheet.totalHours;
-
         dayTimesheet = createNewDayTimesheet(day);
+        dayTimesheet.totalHours += shiftTimesheet.totalHours;
         monthTimesheet.days.push(dayTimesheet);
         dayTimesheet.sessions.push(shiftTimesheet);
       }
