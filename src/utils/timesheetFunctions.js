@@ -374,7 +374,7 @@ async function updateTimesheet(shiftTimesheet, employeeID) {
     yearTimesheet = createYearTimesheet(employeeInfo, year);
     monthTimesheet = createNewMonthTimesheet(month);
     dayTimesheet = createNewDayTimesheet(day);
-    
+
     yearTimesheet.totalHours += shiftTimesheet.totalHours;
     monthTimesheet.totalHours += shiftTimesheet.totalHours;
     dayTimesheet.totalHours += shiftTimesheet.totalHours;
@@ -407,8 +407,8 @@ async function updateTimesheet(shiftTimesheet, employeeID) {
       if (!dayTimesheet) {
         dayTimesheet = createNewDayTimesheet(day);
         dayTimesheet.totalHours += shiftTimesheet.totalHours;
-        monthTimesheet.days.push(dayTimesheet);
         dayTimesheet.sessions.push(shiftTimesheet);
+        monthTimesheet.days.push(dayTimesheet);
       }
       else {
         dayTimesheet.totalHours += shiftTimesheet.totalHours;
