@@ -62,6 +62,13 @@ async function clockOut(employeeID, timeOut) {
 
 }
 
+async function cancelClockIn(employeeID) {
+  if (!getClockedInEmployeeInfo(employeeID)) return false;
+
+  delete clockedInEmployees[employeeID];
+  return true;
+}
+
 
 function calculateHoursWorked(timeIn, timeOut) {
   const millisecondsWorked = timeOut - timeIn;
@@ -486,6 +493,7 @@ async function test() {
 module.exports = {
   clockIn,
   clockOut,
+  cancelClockIn,
   setActiveProject,
   getClockedInEmployeeInfo,
   getYearTimesheet,
