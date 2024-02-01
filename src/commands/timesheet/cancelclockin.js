@@ -29,9 +29,9 @@ module.exports = {
       const employeeID = interaction.user.id;
       const employeeName = interaction.user.username;
 
-      let cancelClockIn = await cancelClockIn(employeeID);
+      let clockInWasCancelled = cancelClockIn(employeeID);
 
-      if (cancelClockIn) {
+      if (clockInWasCancelled) {
          return interaction.editReply(`Cancelled clocked in sessions for ${employeeName}`)
       }
       else {

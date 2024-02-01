@@ -62,7 +62,8 @@ async function clockOut(employeeID, timeOut) {
 
 }
 
-async function cancelClockIn(employeeID) {
+function cancelClockIn(employeeID) {
+  console.log(`\nCANCEL CLOCK IN FUNCTION`);
   if (!getClockedInEmployeeInfo(employeeID)) return false;
 
   delete clockedInEmployees[employeeID];
