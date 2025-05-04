@@ -1,21 +1,5 @@
 {
-  "name": "radec",
-  "version": "3.0.0",
-  "description": "Responsive Artificial Digital Entity Companion",
-  "main": "src/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "Himay",
-  "license": "ISC",
   "dependencies": {
-    "@discordjs/voice": "^0.16.0",
-    "discord.js": "^14.11.0",
-    "dotenv": "^16.0.3",
-    "mongoose": "^7.1.1"
-  },
-  "devDependencies": {
-    "eslint": "^8.54.0"
+    "discord.js": "^14.19.3"
   }
 }
