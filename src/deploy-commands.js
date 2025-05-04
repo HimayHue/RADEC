@@ -5,8 +5,15 @@ const path = require('node:path');
 require('dotenv').config();
 const token = process.env.TOKEN;
 const clientId = process.env.CLIENT_ID;
+const guildId = process.env.GUILD_ID;
+const guildName = "Himay Fan Club";
+
+const addCommandsLocally = process.argv.includes('--local');
+const addCommandsGlobally = process.argv.includes('--global');
+
 
 const commands = [];
+
 // Grab all the command folders from the commands directory you created earlier
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
@@ -28,27 +35,34 @@ for (const folder of commandFolders) {
 }
 
 // Construct and prepare an instance of the REST module
-const rest = new REST().setToken(token);
+const rest = new REST({ version: '10' }).setToken(token);
 
-// for global commands
-rest.put(Routes.applicationCommands(clientId), { body: [] })
-   .then(() => console.log('Successfully deleted all application commands.'))
-   .catch(console.error);
-
-// and deploy your commands!
+// Deploy commands to the guild or globally based on the flags provided.
 (async () => {
    try {
-      console.log(`Started refreshing ${commands.length} application (/) commands.`);
+      // Deploy commands to personal server. 
+      if (addCommandsLocally) {
+         const data = await rest.put(
+            Routes.applicationGuildCommands(clientId, guildId),
+            { body: commands }
+         );
+         console.log(`✅ Successfully added ${data.length} commands to the guild: ${guildName}.`);
+      }
 
-      // The put method is used to fully refresh all commands in the guild with the current set
-      const data = await rest.put(
-         Routes.applicationCommands(clientId),
-         { body: commands },
-      );
+      // Deploy commands globally.
+      if (addCommandsGlobally) {
+         const data = await rest.put(
+            Routes.applicationCommands(clientId),
+            { body: commands }
+         );
+         console.log(`✅ Successfully added ${data.length} commands globally.`);
+      }
 
-      console.log(`Successfully reloaded ${data.length} application (/) commands.`);
-   } catch (error) {
+      if (!addCommandsLocally && !addCommandsGlobally) console.log('⚠️ No flag provided. Use --local or --global to deploy commands.');
+
+   }
+   catch (error) {
       // And of course, make sure you catch and log any errors!
-      console.error(error);
+      console.error('❌ Error deploying commands:', error);
    }
 })();
