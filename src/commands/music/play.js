@@ -17,17 +17,27 @@ module.exports = {
    data: new SlashCommandBuilder()
       .setName('play')
       .setDescription('Play a YouTube link in your voice channel')
-      .addStringOption(option =>
-         option.setName('link')
-            .setDescription('YouTube Link')
-            .setRequired(false)
-      )
-      .addStringOption(option =>
-         option.setName('song')
-            .setDescription('Name of the song to search for on YouTube')
-            .setRequired(false)
-            .setAutocomplete(true)
-      ),
+      .addSubcommand(subcommand => {
+         return subcommand
+            .setName('link')
+            .setDescription('Play a song by link.')
+            .addStringOption(option =>
+               option.setName('link')
+                  .setDescription('YouTube Link')
+                  .setRequired(true)
+            );
+      })
+      .addSubcommand(subcommand => {
+         return subcommand
+            .setName('song')
+            .setDescription('Play a song by name.')
+            .addStringOption(option =>
+               option.setName('song')
+                  .setDescription('Name of the song to search for')
+                  .setRequired(true)
+                  .setAutocomplete(true)
+            );
+      }),
    permissions: [PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak],
    async execute(interaction) {
       const voiceChannel = interaction.member.voice.channel;
