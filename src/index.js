@@ -1,40 +1,65 @@
-require("dotenv").config();
-const { Client, IntentsBitField } = require("discord.js");
-const mongoose = require("mongoose");
-const eventHandler = require("./handlers/eventHandler");
-// const { calculateDuration: calculateSession } = require('./events/Timesheet/calculateSession.js');
+const fs = require('node:fs');
+const path = require('node:path');
+// Require the necessary discord.js classes
+const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 
+require('dotenv').config();
+const token = process.env.TOKEN;
+
+
+// Create a new client instance
 const client = new Client({
-  intents: [
-    IntentsBitField.Flags.Guilds,
-    IntentsBitField.Flags.GuildMembers,
-    IntentsBitField.Flags.GuildMessages,
-    IntentsBitField.Flags.MessageContent,
-    IntentsBitField.Flags.GuildVoiceStates,
-  ],
-}); 
-
-// Calculate Session Duration
-
-const radecOfficeVoiceID = process.env.RADEC_OFFICE_VOICE_ID; // Replace SPECIFIC_CHANNEL_ID with the ID of the specific voice channel
-const timesheetTextChannelID = process.env.RTIMESHEET_TEXT_CHANNEL_ID; // Replace TEXT_CHANNEL_ID with the ID of the specific text channel
-const radecRole = process.env.RADEC_ROLE_ID; // Replace REQUIRED_ROLE_ID with the ID of the specific role
-
-// TODO: Does this apply to individual users or everyone?
-let timeIn;
-let timeOut;
+   intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildVoiceStates,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildMessageReactions,
+      GatewayIntentBits.MessageContent,
+      GatewayIntentBits.DirectMessages
+   ]
+});
 
 
-(async () => {
-  try {
-    mongoose.set("strictQuery", false);
-    await mongoose.connect("mongodb+srv://himayradec:UDRll2qTTTEieEtP@radec.xwhrkef.mongodb.net/RADEC", { keepAlive: true });
-    console.log("Connected to Mongo Database.");
+// Load command files from the commands directory
+client.commands = new Collection();
+const foldersPath = path.join(__dirname, 'commands');
+const commandFolders = fs.readdirSync(foldersPath);
 
-    eventHandler(client);
+for (const folder of commandFolders) {
+   const commandsPath = path.join(foldersPath, folder);
+   const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+   for (const file of commandFiles) {
+      const filePath = path.join(commandsPath, file);
+      const command = require(filePath);
+      // Set a new item in the Collection with the key as the command name and the value as the exported module
+      if ('data' in command && 'execute' in command) {
+         client.commands.set(command.data.name, command);
+         console.log(`Loaded command: ${command.data.name} from ${path.relative(__dirname, filePath)}`);
+      }
+      else {
+         console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+      }
+   }
+}
 
-    client.login("Njk1Nzk2ODEwMDk4Mjc4NDEw.G-psOC.XK5xOTSLrRzqU-OdUZSA6JVR6N_7Dn9hPREJMU");
-  } catch (error) {
-    console.log(`Error: ${error}`);
-  }
-})(); 
+
+// Load event files from the events directory
+const eventsPath = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+
+for (const file of eventFiles) {
+   const filePath = path.join(eventsPath, file);
+   const event = require(filePath);
+   if (event.once) {
+      client.once(event.name, (...args) => event.execute(...args));
+      console.log(`Loaded event: ${event.name} (once) from ${path.relative(__dirname, filePath)}`);
+   }
+   else {
+      client.on(event.name, (...args) => event.execute(...args));
+      console.log(`Loaded event: ${event.name} from ${path.relative(__dirname, filePath)}`);
+   }
+}
+
+
+// Log in to Discord with your client's token
+client.login(token);
