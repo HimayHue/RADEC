@@ -10,7 +10,7 @@ const {
 const youtubedl = require('youtube-dl-exec');
 const path = require('node:path');
 const { YOUTUBE_COOKIE } = require('../../../config.js');
-
+const { connectToChannel } = require('../../connectionManager');
 
 
 
@@ -62,11 +62,7 @@ module.exports = {
             }
          });
 
-         const connection = joinVoiceChannel({
-            channelId: voiceChannel.id,
-            guildId: voiceChannel.guild.id,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator
-         });
+         const connection = connectToChannel(voiceChannel);
 
          player.play(resource);
          connection.subscribe(player);
@@ -109,11 +105,7 @@ module.exports = {
                }
             });
 
-            const connection = joinVoiceChannel({
-               channelId: voiceChannel.id,
-               guildId: voiceChannel.guild.id,
-               adapterCreator: voiceChannel.guild.voiceAdapterCreator
-            });
+            const connection = connectToChannel(voiceChannel);
 
             player.play(resource);
             connection.subscribe(player);
