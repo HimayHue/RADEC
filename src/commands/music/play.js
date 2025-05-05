@@ -7,7 +7,6 @@ const {
    NoSubscriberBehavior,
    StreamType
 } = require('@discordjs/voice');
-const play = require('play-dl');
 const path = require('node:path');
 const { YOUTUBE_COOKIE } = require('../../../config.js');
 
@@ -40,15 +39,16 @@ module.exports = {
       }),
    permissions: [PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak],
    async execute(interaction) {
+      const subcommand = interaction.options.getSubcommand();
       const voiceChannel = interaction.member.voice.channel;
-      const songLink = interaction.options.getString('link');
-      const songName = interaction.options.getString('song');
-      const optionSelected = songLink || songName;
 
-      if (!optionSelected) return await interaction.editReply('❌ Please provide a link or select a song.');
-      if (!voiceChannel) return await interaction.reply({ content: '❌ You must be in a voice channel to use this command.', ephemeral: true });
+      if (!voiceChannel) {
+         return await interaction.reply({ content: '❌ You must be in a voice channel to use this command.', ephemeral: true });
+      }
 
-      if (songName) {
+
+      if (subcommand === 'song') {
+         const songName = interaction.options.getString('song');
          const filePath = path.join(__dirname, '../../../content/music', `${songName}`);
          console.log(`Looking for song: ${songName} at ${filePath}`);
 
@@ -71,49 +71,58 @@ module.exports = {
 
          return await interaction.reply(`🎵 Now playing: ${songName}`);
       }
-
-      // If a YouTube link is provided or a song name is given, search for the song on YouTube
-      await interaction.deferReply();
-      try {
-         // Get the stream.
-         await play.setToken({
-            youtube: {
-               cookie: YOUTUBE_COOKIE
-            }
-         });
-
-         const stream = await play.stream(songLink, { discordPlayerCompatibility: true });
-
-         // Create audio resource
-         const resource = createAudioResource(stream.stream, {
-            inputType: stream.type ?? StreamType.Opus,
-         });
+      else if (subcommand === 'link') {
 
 
-         // Create player and connection
-         const player = createAudioPlayer({
-            behaviors: {
-               noSubscriber: NoSubscriberBehavior.Play,
-            }
-         });
+         const songLink = interaction.options.getString('link');
+         console.log('[DEBUG] Extracted songLink:', songLink);
 
-         const connection = joinVoiceChannel({
-            channelId: voiceChannel.id,
-            guildId: voiceChannel.guild.id,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator
-         });
-
-         // Play and subscribe
-         player.play(resource);
-         connection.subscribe(player);
+         const encodedUrl = encodeURI(songLink);
 
 
 
-         await interaction.editReply(`🎵 Now playing: ${songLink}`);
-      }
-      catch (error) {
-         console.error('Error playing YouTube link:', error);
-         await interaction.editReply('❌ Could not play that YouTube link.');
+         await interaction.deferReply();
+         try {
+            // Get the stream.
+            await play.setToken({
+               youtube: {
+                  cookie: YOUTUBE_COOKIE
+               }
+            });
+
+            const stream = await play.stream(encodedUrl);
+
+            // Create audio resource
+            const resource = createAudioResource(stream.stream, {
+               inputType: stream.type,
+            });
+
+
+            // Create player and connection
+            const player = createAudioPlayer({
+               behaviors: {
+                  noSubscriber: NoSubscriberBehavior.Play,
+               }
+            });
+
+            const connection = joinVoiceChannel({
+               channelId: voiceChannel.id,
+               guildId: voiceChannel.guild.id,
+               adapterCreator: voiceChannel.guild.voiceAdapterCreator
+            });
+
+            // Play and subscribe
+            player.play(resource);
+            connection.subscribe(player);
+
+
+
+            await interaction.editReply(`🎵 Now playing: ${songLink}`);
+         }
+         catch (error) {
+            console.error('Error playing YouTube link:', error);
+            await interaction.editReply('❌ Could not play that YouTube link.');
+         }
       }
    }
 };
