@@ -1,78 +1,109 @@
-const { SlashCommandBuilder } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
-const path = require('node:path');
+const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const {
+   joinVoiceChannel,
+   createAudioPlayer,
+   createAudioResource,
+   AudioPlayerStatus,
+   NoSubscriberBehavior,
+   StreamType
+} = require('@discordjs/voice');
 const play = require('play-dl');
+const path = require('node:path');
+const { YOUTUBE_COOKIE } = require('../../../config.js');
+
+
 
 module.exports = {
    data: new SlashCommandBuilder()
       .setName('play')
-      .setDescription('Play music from YouTube')
+      .setDescription('Play a YouTube link in your voice channel')
       .addStringOption(option =>
-         option.setName('url')
-            .setDescription('YouTube video URL')
-            .setRequired(false)),
-
+         option.setName('link')
+            .setDescription('YouTube Link')
+            .setRequired(false)
+      )
+      .addStringOption(option =>
+         option.setName('song')
+            .setDescription('Name of the song to search for on YouTube')
+            .setRequired(false)
+            .setAutocomplete(true)
+      ),
+   permissions: [PermissionsBitField.Flags.Connect, PermissionsBitField.Flags.Speak],
    async execute(interaction) {
-      const url = interaction.options.getString('url');
-      const defaultSong = path.join(__dirname, '../../content/music/Lil Uzi Vert - Myron [Official Audio].mp3');
-
-      // User must be in a voice channel
       const voiceChannel = interaction.member.voice.channel;
-      console.log(`User ${interaction.user.tag} requested to play URL: ${url}`);
+      const songLink = interaction.options.getString('link');
+      const songName = interaction.options.getString('song');
+      const optionSelected = songLink || songName;
+
+      if (!optionSelected) return await interaction.editReply('❌ Please provide a link or select a song.');
       if (!voiceChannel) return await interaction.reply({ content: '❌ You must be in a voice channel to use this command.', ephemeral: true });
 
-      await interaction.deferReply();
-      if (!url) {
-         try {
-            // Play a default song 
-            const resource = createAudioResource(defaultSong);
+      if (songName) {
+         const filePath = path.join(__dirname, '../../../content/music', `${songName}`);
+         console.log(`Looking for song: ${songName} at ${filePath}`);
 
-            const player = createAudioPlayer();
+         // If the song exists in the local directory, play it directly
+         const resource = createAudioResource(filePath);
+         const player = createAudioPlayer({
+            behaviors: {
+               noSubscriber: NoSubscriberBehavior.Play,
+            }
+         });
 
-            const connection = joinVoiceChannel({
-               channelId: voiceChannel.id,
-               guildId: voiceChannel.guild.id,
-               adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-            });
+         const connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator
+         });
 
-            // Subscribe the connection to the audio player (will play audio on the voice connection)
-            player.play(resource);
-            connection.subscribe(player);
+         player.play(resource);
+         connection.subscribe(player);
 
-
-         }
-         catch (error) {
-            console.error('Playback error:', error);
-            return await interaction.editReply('❌ An error occurred while trying to play music.');
-         }
+         return await interaction.reply(`🎵 Now playing: ${songName}`);
       }
 
-      // Look up the URL to ensure it's a valid YouTube link
-      else {
-         try {
-            const stream = await play.stream(url, { discordPlayerCompatibility: true });
-            const resource = createAudioResource(stream.stream, { inputType: stream.type });
-            const player = createAudioPlayer();
+      // If a YouTube link is provided or a song name is given, search for the song on YouTube
+      await interaction.deferReply();
+      try {
+         // Get the stream.
+         await play.setToken({
+            youtube: {
+               cookie: YOUTUBE_COOKIE
+            }
+         });
 
-            const connection = joinVoiceChannel({
-               channelId: voiceChannel.id,
-               guildId: interaction.guild.id,
-               adapterCreator: interaction.guild.voiceAdapterCreator
-            });
+         const stream = await play.stream(songLink, { discordPlayerCompatibility: true });
 
-            player.play(resource);
-            connection.subscribe(player);
+         // Create audio resource
+         const resource = createAudioResource(stream.stream, {
+            inputType: stream.type ?? StreamType.Opus,
+         });
 
-            player.on(AudioPlayerStatus.Idle, () => {
-               connection.destroy();
-            });
 
-            await interaction.editReply(`▶️ Now playing: ${url}`);
-         }
-         catch (error) {
-            console.error('Playback error:', error);
-            await interaction.editReply('❌ Could not play that YouTube link.');
-         }
+         // Create player and connection
+         const player = createAudioPlayer({
+            behaviors: {
+               noSubscriber: NoSubscriberBehavior.Play,
+            }
+         });
+
+         const connection = joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator
+         });
+
+         // Play and subscribe
+         player.play(resource);
+         connection.subscribe(player);
+
+
+
+         await interaction.editReply(`🎵 Now playing: ${songLink}`);
+      }
+      catch (error) {
+         console.error('Error playing YouTube link:', error);
+         await interaction.editReply('❌ Could not play that YouTube link.');
       }
    }
 };

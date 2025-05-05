@@ -4,70 +4,47 @@ const {
    createAudioPlayer,
    createAudioResource,
    AudioPlayerStatus,
-   NoSubscriberBehavior
+   NoSubscriberBehavior,
+   StreamType
 } = require('@discordjs/voice');
-const path = require('node:path');
+const path = require('path');
 const fs = require('fs');
 
 
 module.exports = {
    data: new SlashCommandBuilder()
       .setName('playdefault')
-      .setDescription('Play a local MP3 file'),
+      .setDescription('Girls Wanna Have Fun Remix'),
 
    async execute(interaction) {
+      const audioPath = path.join(__dirname, '../../../content/music/2.mp3');
+      // Check if the audio file exists
+      if (!fs.existsSync(audioPath)) {
+         console.error(`Audio file not found: ${audioPath}`);
+         return await interaction.reply({ content: '❌ Audio file not found.', ephemeral: true });
+      }
+      // Error Handles
       console.log(`User ${interaction.user.tag} requested to play the default song.`);
-      const defaultSong = path.join(__dirname, '../../../content/music/Myron.mp3');
-
-      if (!fs.existsSync(defaultSong)) {
-         console.error('❌ MP3 file not found at:', defaultSong);
-         await interaction.reply('❌ Default song file not found. Please check the file path.');
-         return;
-      }
-
       const voiceChannel = interaction.member.voice.channel;
-      if (!voiceChannel) {
-         return await interaction.reply({ content: '❌ You must be in a voice channel to use this command.', ephemeral: true });
-      }
+      if (!voiceChannel) return await interaction.reply({ content: '❌ You must be in a voice channel to use this command.', ephemeral: true });
 
       const connection = joinVoiceChannel({
          channelId: voiceChannel.id,
          guildId: voiceChannel.guild.id,
-         adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+         adapterCreator: voiceChannel.guild.voiceAdapterCreator
       });
 
-      const resource = createAudioResource(defaultSong);
       const player = createAudioPlayer({
          behaviors: {
-            noSubscriber: NoSubscriberBehavior.Play // <- forces playback even if Discord thinks no one is listening
+            noSubscriber: NoSubscriberBehavior.Play,
          }
       });
+
+
+      const resource = createAudioResource(audioPath);;
       player.play(resource);
       connection.subscribe(player);
 
-      player.on(AudioPlayerStatus.Playing, () => {
-         console.log('✅ Audio is playing');
-      });
-
-      player.on(AudioPlayerStatus.Idle, () => {
-         console.log('🔇 Audio finished (Idle)');
-      });
-
-      player.on('error', error => {
-         console.error('❌ Audio player error:', error);
-      });
-
-      connection.on('stateChange', (oldState, newState) => {
-         console.log(`🔄 Voice connection state changed: ${oldState.status} -> ${newState.status}`);
-      });
-
-      player.on('stateChange', (oldState, newState) => {
-         console.log(`🎵 Audio player state changed: ${oldState.status} -> ${newState.status}`);
-      });
-
-      console.log('👥 Voice channel members:', voiceChannel.members.map(m => `${m.user.username}${m.user.bot ? ' (bot)' : ''}`).join(', '));
-
-
-      await interaction.reply('🎵 Now playing default track: **Myron**');
+      await interaction.reply(`🎵 Now playing default track: Girls Wanna Have Fun Remix`);
    }
 };
