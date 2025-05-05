@@ -7,8 +7,10 @@ const {
    NoSubscriberBehavior,
    StreamType
 } = require('@discordjs/voice');
+const youtubedl = require('youtube-dl-exec');
 const path = require('node:path');
 const { YOUTUBE_COOKIE } = require('../../../config.js');
+
 
 
 
@@ -72,33 +74,35 @@ module.exports = {
          return await interaction.reply(`🎵 Now playing: ${songName}`);
       }
       else if (subcommand === 'link') {
-
-
          const songLink = interaction.options.getString('link');
-         console.log('[DEBUG] Extracted songLink:', songLink);
-
-         const encodedUrl = encodeURI(songLink);
-
-
 
          await interaction.deferReply();
+
          try {
-            // Get the stream.
-            await play.setToken({
-               youtube: {
-                  cookie: YOUTUBE_COOKIE
-               }
+
+            const { spawn } = require('child_process');
+
+            const process = spawn('yt-dlp', [
+               '-f', 'bestaudio',
+               '--no-playlist',
+               '-o', '-', // output to stdout
+               songLink
+            ]);
+
+            // Debugging output
+            process.stderr.on('data', (data) => {
+               console.error(`[yt-dlp stderr] ${data}`);
             });
 
-            const stream = await play.stream(encodedUrl);
-
-            // Create audio resource
-            const resource = createAudioResource(stream.stream, {
-               inputType: stream.type,
+            process.on('error', (err) => {
+               console.error('yt-dlp process error:', err);
             });
 
 
-            // Create player and connection
+            const resource = createAudioResource(process.stdout, {
+               inputType: StreamType.Arbitrary
+            });
+
             const player = createAudioPlayer({
                behaviors: {
                   noSubscriber: NoSubscriberBehavior.Play,
@@ -111,18 +115,16 @@ module.exports = {
                adapterCreator: voiceChannel.guild.voiceAdapterCreator
             });
 
-            // Play and subscribe
             player.play(resource);
             connection.subscribe(player);
-
-
 
             await interaction.editReply(`🎵 Now playing: ${songLink}`);
          }
          catch (error) {
-            console.error('Error playing YouTube link:', error);
-            await interaction.editReply('❌ Could not play that YouTube link.');
+            console.error('Error searching/playing YouTube link:', error);
+            await interaction.editReply('❌ Could not play the requested YouTube query.');
          }
       }
+
    }
 };
