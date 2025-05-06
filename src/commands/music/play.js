@@ -72,6 +72,12 @@ module.exports = {
       else if (subcommand === 'link') {
          const songLink = interaction.options.getString('link');
 
+         // Validate the YouTube link format using a regex pattern
+         const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
+         if (!youtubeRegex.test(songLink)) {
+            return await interaction.reply({ content: '❌ The provided link is not a valid YouTube link.', ephemeral: true });
+         }
+
          await interaction.deferReply();
 
          try {
