@@ -84,12 +84,21 @@ module.exports = {
 
             const { spawn } = require('child_process');
 
+            // Use yt-dlp to get the audio stream from the YouTube link
             const process = spawn('yt-dlp', [
                '-f', 'bestaudio',
                '--no-playlist',
                '-o', '-', // output to stdout
                songLink
             ]);
+
+            // Handle the YouTube link not being found or being private
+            process.on('close', (code) => {
+               if (code !== 0) {
+                  console.error(`yt-dlp exited with code ${code}`);
+                  interaction.editReply('❌ Could not play the requested YouTube link. The video might be private or unavailable.');
+               }
+            });
 
             // Debugging output
             process.stderr.on('data', (data) => {
@@ -101,16 +110,17 @@ module.exports = {
             });
 
 
+            // Create an audio resource from the yt-dlp output stream
             const resource = createAudioResource(process.stdout, {
                inputType: StreamType.Arbitrary
             });
 
+            // Create an audio player and connect to the voice channel
             const player = createAudioPlayer({
                behaviors: {
                   noSubscriber: NoSubscriberBehavior.Play,
                }
             });
-
             const connection = connectToChannel(voiceChannel);
 
             player.play(resource);
