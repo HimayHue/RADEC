@@ -11,9 +11,9 @@ module.exports = {
    execute(client) {
       console.log(`Ready! Logged in as ${client.user.tag}`);
 
-      setInterval(async () => {
+      const trackLoop = async () => {
          const tracked = loadTracked();
-         console.log(`Tracking classes every minute`)
+         console.log(`[${new Date().toLocaleTimeString()}] tracking classes`);
          for (const entry of tracked) {
             try {
                const current = await scrapeSeats(entry.classNumber, entry.termCode);
@@ -22,13 +22,16 @@ module.exports = {
                   await user.send(`🚨 A seat has opened for class ${entry.classNumber} (${entry.termCode})! Now ${current} available.`);
                }
                entry.lastAvailable = current;
-            }
-            catch (err) {
-               console.error('Error checking class:', entry, err.message);
+            } catch (err) {
+               // handle errors if needed
             }
          }
          fs.writeFileSync('./trackedClasses.json', JSON.stringify(tracked, null, 2));
-      }, 1 * 60 * 1000); // every 1 minute
+      };
+
+      trackLoop();
+
+      setInterval(trackLoop, 1 * 60 * 1000);
 
    },
 };

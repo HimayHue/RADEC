@@ -16,7 +16,7 @@ function saveTracked(data) {
 
 function termCodeFromSemester(semester) {
    const map = {
-      summer: '2255',
+      summer: '2254',
       fall: '2257'
    };
    return map[semester];
