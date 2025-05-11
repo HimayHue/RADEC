@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlags } = require('discord.js');
 const { destroyConnection, getConnection } = require('../../connectionManager');
 
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
          await interaction.reply('👋 Left the voice channel.');
       }
       else {
-         await interaction.reply({ content: '❌ I am not connected to any voice channel.', ephemeral: true });
+         await interaction.reply({ content: '❌ I am not connected to any voice channel.', flags: MessageFlags.Ephemeral });
       }
    },
 };

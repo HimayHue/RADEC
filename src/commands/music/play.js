@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const { SlashCommandBuilder, PermissionsBitField, MessageFlags } = require('discord.js');
 const {
    joinVoiceChannel,
    createAudioPlayer,
@@ -45,7 +45,7 @@ module.exports = {
       const voiceChannel = interaction.member.voice.channel;
 
       if (!voiceChannel) {
-         return await interaction.reply({ content: '❌ You must be in a voice channel to use this command.', ephemeral: true });
+         return await interaction.reply({ content: '❌ You must be in a voice channel to use this command.', flags: MessageFlags.Ephemeral });
       }
 
 
@@ -75,7 +75,7 @@ module.exports = {
          // Validate the YouTube link format using a regex pattern
          const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/;
          if (!youtubeRegex.test(songLink)) {
-            return await interaction.reply({ content: '❌ The provided link is not a valid YouTube link.', ephemeral: true });
+            return await interaction.reply({ content: '❌ The provided link is not a valid YouTube link.', flags: MessageFlags.Ephemeral });
          }
 
          await interaction.deferReply();
