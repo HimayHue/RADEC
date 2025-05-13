@@ -12,26 +12,34 @@ module.exports = {
       console.log(`Ready! Logged in as ${client.user.tag}`);
 
       const trackLoop = async () => {
-         const tracked = loadTracked();
-         console.log(`[${new Date().toLocaleTimeString()}] tracking classes`);
-         for (const entry of tracked) {
+         const trackedCourses = loadTracked(); // Load tracked classes
+         for (const course of trackedCourses) {
             try {
-               const current = await scrapeSeats(entry.classNumber, entry.termCode);
-               if (entry.lastAvailable !== null && current > entry.lastAvailable) {
-                  const user = await client.users.fetch(entry.userId);
-                  await user.send(`🚨 A seat has opened for class ${entry.classNumber} (${entry.termCode})! Now ${current} available.`);
+               const seatsAvailable = await scrapeSeats(course.classNumber, course.termCode);
+               console.log(`[${new Date().toLocaleTimeString()}] Currents seats for ${course.classNumber} (${course.termCode}) are ${seatsAvailable} `);
+
+               function seatJustOpened(prev, current) {
+                  return prev !== null && prev === 0 && current > 0;
                }
-               entry.lastAvailable = current;
-            } catch (err) {
+
+               if (seatJustOpened(course.previousAvailableSeats, seatsAvailable)) {
+                  const user = await client.users.fetch(course.userId);
+                  await user.send(`🚨 A seat has opened for class ${course.classNumber} (${course.termCode})! Now ${seatsAvailable} available.`);
+               }
+               // Only update the previousAvailableSeats if it has changed to prevent unnecessary writes
+               if (course.previousAvailableSeats != seatsAvailable) course.previousAvailableSeats = seatsAvailable;
+            }
+            catch (err) {
                // handle errors if needed
             }
          }
-         fs.writeFileSync('./trackedClasses.json', JSON.stringify(tracked, null, 2));
+         fs.writeFileSync('./trackedClasses.json', JSON.stringify(trackedCourses, null, 2));
+
+         // Schedule next run with random interval
+         const nextInterval = (50 + Math.random() * 20) * 1000;
+         setTimeout(trackLoop, nextInterval);
       };
 
       trackLoop();
-
-      setInterval(trackLoop, 1 * 60 * 1000);
-
    },
 };

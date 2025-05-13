@@ -44,14 +44,14 @@ async function scrapeSeats(classNumber, termCode) {
    }
 
    const availableSeats = parseInt(seatMatch[1], 10);
-   const totalSeats = parseInt(seatMatch[2], 10);
+   const totalSeats = parseInt(seatMatch[2], 10); // unused but can be useful for debugging
 
-   console.log(`Available seats: ${availableSeats}`);
-   console.log(`Total capacity: ${totalSeats}`);
+   // console.log(`Available seats: ${availableSeats}`);
+   // console.log(`Total capacity: ${totalSeats}`);
 
    await browser.close();
 
-   return { available: availableSeats, capacity: totalSeats };
+   return availableSeats;
 }
 
 module.exports = { scrapeSeats };

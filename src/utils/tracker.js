@@ -26,7 +26,7 @@ function addTrackedClass(userId, classNumber, termCode) {
    const tracked = loadTracked();
    const exists = tracked.find(e => e.userId === userId && e.classNumber === classNumber && e.termCode === termCode);
    if (exists) return false;
-   tracked.push({ userId, classNumber, termCode, lastAvailable: null });
+   tracked.push({ userId, classNumber, termCode, previousAvailableSeats: 0 });
    saveTracked(tracked);
    return true;
 }

@@ -3,9 +3,6 @@
     "userId": "175754553772212224",
     "classNumber": 40789,
     "termCode": "2254",
-    "lastAvailable": {
-      "available": 0,
-      "capacity": 240
-    }
+    "previousAvailableSeats": 0
   }
 ]
