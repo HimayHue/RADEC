@@ -2,7 +2,7 @@ const { Events } = require('discord.js');
 const fs = require('fs');
 
 // Class Tracking 
-const { loadTracked } = require('../utils/tracker');
+const { loadTrackedCourses } = require('../utils/tracker');
 const { scrapeSeats } = require('../utils/scraper');
 
 module.exports = {
@@ -12,25 +12,28 @@ module.exports = {
       console.log(`Ready! Logged in as ${client.user.tag}`);
 
       const trackLoop = async () => {
-         const trackedCourses = loadTracked(); // Load tracked classes
+         console.log(`[${new Date().toLocaleTimeString()}] Starting tracking loop...`);
+         const trackedCourses = loadTrackedCourses(); // Load tracked classes
          for (const course of trackedCourses) {
             try {
-               const seatsAvailable = await scrapeSeats(course.classNumber, course.termCode);
-               console.log(`[${new Date().toLocaleTimeString()}] Currents seats for ${course.classNumber} (${course.termCode}) are ${seatsAvailable} `);
+               const seatsAvailable = await scrapeSeats(course.courseNumber, course.termCode);
+               console.log(`[${new Date().toLocaleTimeString()}] ${seatsAvailable} Currents seats for ${course.course} ${course.courseTitle} ${course.courseNumber}`);
 
+               //TODO: Can move this to somewhere else
                function seatJustOpened(prev, current) {
                   return prev !== null && prev === 0 && current > 0;
                }
 
+               // TODO: Maybe make this a function for better readability
                if (seatJustOpened(course.previousAvailableSeats, seatsAvailable)) {
                   const user = await client.users.fetch(course.userId);
-                  await user.send(`🚨 A seat has opened for class ${course.classNumber} (${course.termCode})! Now ${seatsAvailable} available.`);
+                  await user.send(`🚨 A seat has opened for class ${course.courseNumber} (${course.termCode})! Now ${seatsAvailable} available.`);
                }
                // Only update the previousAvailableSeats if it has changed to prevent unnecessary writes
                if (course.previousAvailableSeats != seatsAvailable) course.previousAvailableSeats = seatsAvailable;
             }
             catch (err) {
-               // handle errors if needed
+               console.error(`[${new Date().toLocaleTimeString()}] Error tracking class ${course.course} ${course.courseTitle}:`, err);
             }
          }
          fs.writeFileSync('./trackedClasses.json', JSON.stringify(trackedCourses, null, 2));

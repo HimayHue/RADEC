@@ -15,7 +15,7 @@ module.exports = {
          return;
       }
 
-      const summary = tracked.map(entry => `• Class ${entry.classNumber} (term ${entry.termCode})`).join('\n');
+      const summary = tracked.map(entry => `• Class ${entry.course} ${entry.courseTitle}`).join('\n');
       await interaction.reply({ content: `📘 You are tracking the following classes:\n${summary}`, flags: MessageFlags.Ephemeral });
    }
 };

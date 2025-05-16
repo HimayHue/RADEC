@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, MessageFlags } = require('discord.js');
-const { addTrackedClass, termCodeFromSemester } = require('../../utils/tracker');
+const { trackCourse } = require('../../utils/tracker');
 
 
 module.exports = {
@@ -11,24 +11,43 @@ module.exports = {
             .setDescription('Choose the semester')
             .setRequired(true)
             .addChoices(
-               // { name: 'Spring', value: 'spring' },
-               { name: 'Summer 2025', value: 'summer' },
-               { name: 'Fall 2025', value: 'fall' }
+               { name: 'Fall 2025', value: '2257' },
+               { name: 'Summer 2025', value: '2254' }
             ))
+      .addStringOption(option =>
+         option.setName('course')
+            .setDescription('ie. CSE 472')
+            .setRequired(true)
+      )
+      .addStringOption(option =>
+         option.setName('course_title')
+            .setDescription('ie. Social Media Mining')
+            .setRequired(true)
+      )
       .addIntegerOption(option =>
-         option.setName('class_number')
-            .setDescription('Enter the class number')
+         option.setName('course_number')
+            .setDescription('ie, 45786')
             .setRequired(true)),
    async execute(interaction) {
-      const semester = interaction.options.getString('semester');
-      const classNumber = interaction.options.getInteger('class_number');
-      const termCode = termCodeFromSemester(semester);
       const userId = interaction.user.id;
+      const termCode = interaction.options.getString('semester');
+      const course = interaction.options.getString('course');
+      const courseTitle = interaction.options.getString('course_title');
+      const courseNumber = interaction.options.getInteger('course_number');
 
-      const added = addTrackedClass(userId, classNumber, termCode);
+      function getSemesterName(termCode) {
+         const map = {
+            '2254': 'Summer 2025',
+            '2257': 'Fall 2025',
+         };
+         return map[termCode] || 'Unknown Semester';
+      }
 
-      if (added) {
-         await interaction.user.send(`✅ Now tracking class ${classNumber} for ${semester} (${termCode}). You'll get a DM if a seat opens.`);
+
+      const courseTrackedSuccessfully = trackCourse(userId, termCode, course, courseTitle, courseNumber);
+
+      if (courseTrackedSuccessfully) {
+         await interaction.user.send(`✅ Now tracking class ${course} ${courseTitle} ${courseNumber} for ${getSemesterName(termCode)}. You'll get a DM if a seat opens.`);
          await interaction.reply({ content: 'Tracking started! Check your DMs.', flags: MessageFlags.Ephemeral });
       }
       else {
