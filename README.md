@@ -66,9 +66,9 @@ Deploy Commands
 From the root:
 
 - To your test guild:
-      node deploy-commands.js --local
+      node src/add-commands.js --local
 - Globally:
-      node deploy-commands.js --global
+      node src/add-commands.js --global
 
 Notes
 -----

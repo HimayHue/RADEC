@@ -11,8 +11,7 @@ module.exports = {
             .setDescription('Choose the semester')
             .setRequired(true)
             .addChoices(
-               { name: 'Fall 2025', value: '2257' },
-               { name: 'Summer 2025', value: '2254' }
+               { name: 'Fall 2025', value: '2257' }
             ))
       .addStringOption(option =>
          option.setName('course')

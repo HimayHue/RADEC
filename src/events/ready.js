@@ -27,7 +27,7 @@ module.exports = {
                // TODO: Maybe make this a function for better readability
                if (seatJustOpened(course.previousAvailableSeats, seatsAvailable)) {
                   const user = await client.users.fetch(course.userId);
-                  await user.send(`🚨 A seat has opened for class ${course.courseNumber} (${course.termCode})! Now ${seatsAvailable} available.`);
+                  await user.send(`🚨 A seat has opened for class ${course.course} ${course.courseTitle} ${course.courseNumber} (${course.termCode})! Now ${seatsAvailable} available.`);
                }
                // Only update the previousAvailableSeats if it has changed to prevent unnecessary writes
                if (course.previousAvailableSeats != seatsAvailable) course.previousAvailableSeats = seatsAvailable;

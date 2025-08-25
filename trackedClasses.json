@@ -2,56 +2,16 @@
   {
     "userId": "175754553772212224",
     "course": "CSE 471",
-    "courseTitle": "Introduction to Artificial Intelligence",
+    "courseTitle": "iCourse Intro To AI",
     "courseNumber": 85046,
     "termCode": "2257",
     "previousAvailableSeats": 0
   },
   {
     "userId": "175754553772212224",
-    "course": "CSE 472",
-    "courseTitle": "Social Media Mining",
-    "courseNumber": 68276,
-    "termCode": "2257",
-    "previousAvailableSeats": 0
-  },
-  {
-    "userId": "175754553772212224",
-    "course": "CSE 445",
-    "courseTitle": "Distributed Software Development",
-    "courseNumber": 60420,
-    "termCode": "2257",
-    "previousAvailableSeats": 0
-  },
-  {
-    "userId": "175754553772212224",
-    "course": "CSE 494",
-    "courseTitle": "Image Processing and Analysis",
-    "courseNumber": 82283,
-    "termCode": "2257",
-    "previousAvailableSeats": 0
-  },
-  {
-    "userId": "175754553772212224",
-    "course": "CSE 412",
-    "courseTitle": "Database Management",
-    "courseNumber": 74165,
-    "termCode": "2257",
-    "previousAvailableSeats": 0
-  },
-  {
-    "userId": "175754553772212224",
-    "course": "CSE 412",
-    "courseTitle": "Database Management",
-    "courseNumber": 71678,
-    "termCode": "2257",
-    "previousAvailableSeats": 0
-  },
-  {
-    "userId": "175754553772212224",
-    "course": "CSE 494",
-    "courseTitle": "Algorithms in Computational Biology",
-    "courseNumber": 72682,
+    "course": "CSE 475",
+    "courseTitle": "iCourse Foundations of Machine Learning",
+    "courseNumber": 77919,
     "termCode": "2257",
     "previousAvailableSeats": 0
   }
