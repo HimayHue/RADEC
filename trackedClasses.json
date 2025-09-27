@@ -1,18 +1,1 @@
-[
-  {
-    "userId": "175754553772212224",
-    "course": "CSE 471",
-    "courseTitle": "iCourse Intro To AI",
-    "courseNumber": 85046,
-    "termCode": "2257",
-    "previousAvailableSeats": 0
-  },
-  {
-    "userId": "175754553772212224",
-    "course": "CSE 475",
-    "courseTitle": "iCourse Foundations of Machine Learning",
-    "courseNumber": 77919,
-    "termCode": "2257",
-    "previousAvailableSeats": 0
-  }
-]
+[]

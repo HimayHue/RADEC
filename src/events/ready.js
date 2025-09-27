@@ -39,8 +39,8 @@ module.exports = {
          fs.writeFileSync('./trackedClasses.json', JSON.stringify(trackedCourses, null, 2));
 
          // Schedule next run with random interval
-         const nextInterval = (50 + Math.random() * 20) * 1000;
-         setTimeout(trackLoop, nextInterval);
+         const scrapeInterval = (20 + Math.random() * 25) * 1000;
+         setTimeout(trackLoop, scrapeInterval);
       };
 
       trackLoop();
