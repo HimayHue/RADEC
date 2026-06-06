@@ -12,6 +12,7 @@ module.exports = {
       console.log(`Ready! Logged in as ${client.user.tag}`);
 
       const trackLoop = async () => {
+         if (process.env.TRACK_CLASSES !== 'true') return; // Skip tracking if disabled
          console.log(`[${new Date().toLocaleTimeString()}] Starting tracking loop...`);
          const trackedCourses = loadTrackedCourses(); // Load tracked classes
          for (const course of trackedCourses) {

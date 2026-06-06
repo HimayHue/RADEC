@@ -9,6 +9,15 @@ const {
 } = require('@discordjs/voice');
 const youtubedl = require('youtube-dl-exec');
 const path = require('node:path');
+const fs = require('node:fs');
+const ffmpegStatic = (() => {
+   try {
+      return require('ffmpeg-static');
+   }
+   catch (e) {
+      return null;
+   }
+})();
 const { YOUTUBE_COOKIE } = require('../../../config.js');
 const { connectToChannel } = require('../../connectionManager');
 
@@ -82,18 +91,21 @@ module.exports = {
 
          try {
 
-            const { spawn } = require('child_process');
+            // Ensure local ffmpeg binary from ffmpeg-static is available to child processes
+            if (ffmpegStatic) {
+               const ffmpegDir = path.dirname(ffmpegStatic);
+               process.env.PATH = `${ffmpegDir}${path.delimiter}${process.env.PATH}`;
+            }
 
-            // Use yt-dlp to get the audio stream from the YouTube link
-            const process = spawn('yt-dlp', [
-               '-f', 'bestaudio',
-               '--no-playlist',
-               '-o', '-', // output to stdout
-               songLink
-            ]);
+            // Use youtube-dl-exec (which auto-installs yt-dlp) to spawn a subprocess streaming audio
+            const subprocess = youtubedl.exec(songLink, {
+               output: '-',
+               format: 'bestaudio',
+               noPlaylist: true,
+            });
 
             // Handle the YouTube link not being found or being private
-            process.on('close', (code) => {
+            subprocess.on('close', (code) => {
                if (code !== 0) {
                   console.error(`yt-dlp exited with code ${code}`);
                   interaction.editReply('❌ Could not play the requested YouTube link. The video might be private or unavailable.');
@@ -101,17 +113,16 @@ module.exports = {
             });
 
             // Debugging output
-            process.stderr.on('data', (data) => {
+            subprocess.stderr.on('data', (data) => {
                console.error(`[yt-dlp stderr] ${data}`);
             });
 
-            process.on('error', (err) => {
+            subprocess.on('error', (err) => {
                console.error('yt-dlp process error:', err);
             });
 
-
             // Create an audio resource from the yt-dlp output stream
-            const resource = createAudioResource(process.stdout, {
+            const resource = createAudioResource(subprocess.stdout, {
                inputType: StreamType.Arbitrary
             });
 
